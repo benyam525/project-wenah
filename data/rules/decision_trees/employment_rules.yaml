@@ -1,0 +1,654 @@
+# Employment Civil Rights Compliance Rules
+# Decision tree rules for Title VII and ADA compliance
+
+rule_tree:
+  id: "employment-compliance-rules"
+  name: "Employment Discrimination Compliance Rules"
+  category: "employment"
+  applicable_laws:
+    - "title-vii-1964"
+    - "ada-1990"
+  version: "1.0.0"
+  last_updated: "2025-01-13"
+
+  rules:
+    # =========================================================================
+    # CRITICAL SEVERITY RULES - Clear violations requiring immediate action
+    # =========================================================================
+
+    - id: "emp-001"
+      name: "Direct Protected Class Data Collection in Hiring"
+      description: |
+        Flags direct collection of protected class data (race, religion, sex,
+        national origin, disability status) during the hiring process when not
+        required for legitimate purposes.
+      severity: "critical"
+      confidence: 1.0
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.category"
+            operator: "equals"
+            value: "hiring"
+          - field: "feature.feature_type"
+            operator: "in"
+            values: ["data_collection", "user_interface"]
+          - operator: "OR"
+            items:
+              - field: "feature.data_fields[*].name"
+                operator: "contains_any"
+                values:
+                  - "race"
+                  - "ethnicity"
+                  - "religion"
+                  - "religious_affiliation"
+                  - "national_origin"
+                  - "country_of_origin"
+                  - "sex"
+                  - "gender"
+                  - "disability"
+                  - "disability_status"
+                  - "medical_condition"
+              - field: "feature.data_fields[*].potential_proxy"
+                operator: "is_not_null"
+      consequence:
+        violation: true
+        risk_score: 100
+        law_reference: "title-vii-1964:pp-disparate-treatment"
+        recommendation: |
+          Remove collection of protected class data from hiring process.
+          If required for EEO reporting, collect separately after hire
+          decision and ensure it is not used in hiring decisions.
+        escalate_to_llm: false
+
+    - id: "emp-002"
+      name: "Pre-Offer Medical Inquiry"
+      description: |
+        Detects prohibited medical inquiries or disability-related questions
+        before a conditional job offer is made.
+      severity: "critical"
+      confidence: 1.0
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.category"
+            operator: "equals"
+            value: "hiring"
+          - field: "feature.feature_type"
+            operator: "in"
+            values: ["data_collection", "algorithm", "decision_making"]
+          - operator: "OR"
+            items:
+              - field: "feature.data_fields[*].name"
+                operator: "contains_any"
+                values:
+                  - "disability"
+                  - "medical_history"
+                  - "prescription_medications"
+                  - "workers_compensation_history"
+                  - "health_condition"
+                  - "mental_health"
+                  - "physical_limitations"
+              - field: "feature.algorithm.inputs"
+                operator: "contains_any"
+                values:
+                  - "health_data"
+                  - "medical_records"
+                  - "disability_inference"
+      consequence:
+        violation: true
+        risk_score: 100
+        law_reference: "ada-1990:pp-medical-inquiries"
+        recommendation: |
+          Remove all medical and disability-related inquiries from pre-offer
+          stage. Medical examinations and inquiries are only permitted after
+          a conditional offer of employment.
+        escalate_to_llm: false
+
+    - id: "emp-003"
+      name: "Explicit Discriminatory Criteria"
+      description: |
+        Detects decision criteria that explicitly reference protected classes
+        in a manner that suggests discriminatory intent.
+      severity: "critical"
+      confidence: 1.0
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.feature_type"
+            operator: "in"
+            values: ["algorithm", "decision_making", "scoring_model"]
+          - field: "feature.algorithm.inputs"
+            operator: "contains_any"
+            values:
+              - "race"
+              - "gender"
+              - "sex"
+              - "religion"
+              - "national_origin"
+              - "age"
+              - "disability"
+      consequence:
+        violation: true
+        risk_score: 100
+        law_reference: "title-vii-1964:pp-disparate-treatment"
+        recommendation: |
+          Immediately remove protected class characteristics from algorithm
+          inputs. Conduct audit to ensure no discriminatory outputs remain.
+        escalate_to_llm: false
+
+    # =========================================================================
+    # HIGH SEVERITY RULES - Significant risk requiring strong remediation
+    # =========================================================================
+
+    - id: "emp-004"
+      name: "Proxy Variable Detection - Geographic"
+      description: |
+        Detects use of geographic variables that may serve as proxies for
+        race or national origin, potentially causing disparate impact.
+      severity: "high"
+      confidence: 0.85
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.feature_type"
+            operator: "in"
+            values: ["algorithm", "scoring_model", "decision_making"]
+          - field: "feature.data_fields[*].name"
+            operator: "contains_any"
+            values:
+              - "zip_code"
+              - "postal_code"
+              - "neighborhood"
+              - "census_tract"
+              - "address"
+              - "school_district"
+          - field: "feature.data_fields[*].used_in_decisions"
+            operator: "equals"
+            value: true
+      consequence:
+        violation: "potential"
+        risk_score: 75
+        law_reference: "title-vii-1964:pp-disparate-impact"
+        recommendation: |
+          Conduct disparate impact analysis on outcomes by protected class.
+          If impact exists, demonstrate business necessity or remove variable.
+          Consider less discriminatory alternatives.
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Analyze whether the use of geographic variables in this hiring
+            decision tool could cause disparate impact on protected classes.
+          required_analysis:
+            - "correlation_with_protected_class"
+            - "business_necessity"
+            - "less_discriminatory_alternatives"
+
+    - id: "emp-005"
+      name: "Proxy Variable Detection - Name Analysis"
+      description: |
+        Detects use of name-based analysis that may infer protected class
+        characteristics like race, national origin, or sex.
+      severity: "high"
+      confidence: 0.9
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.algorithm.inputs"
+            operator: "contains_any"
+            values:
+              - "name"
+              - "first_name"
+              - "last_name"
+              - "surname"
+          - operator: "OR"
+            items:
+              - field: "feature.algorithm.type"
+                operator: "equals"
+                value: "ml_model"
+              - field: "feature.description"
+                operator: "contains_any"
+                values:
+                  - "name analysis"
+                  - "name scoring"
+                  - "name inference"
+      consequence:
+        violation: "potential"
+        risk_score: 80
+        law_reference: "title-vii-1964:pp-disparate-treatment"
+        recommendation: |
+          Name-based analysis can serve as a proxy for race, national origin,
+          or sex. Remove name from algorithmic inputs unless strictly necessary
+          for identification. Conduct bias audit if name is used.
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Analyze whether name-based analysis in this context could lead to
+            discrimination based on race, national origin, or sex.
+          required_analysis:
+            - "potential_for_discrimination"
+            - "alternative_approaches"
+
+    - id: "emp-006"
+      name: "AI Video Interview Analysis"
+      description: |
+        Detects use of AI to analyze video interviews, which may discriminate
+        against individuals with disabilities or certain protected classes.
+      severity: "high"
+      confidence: 0.85
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.category"
+            operator: "equals"
+            value: "hiring"
+          - field: "feature.algorithm.type"
+            operator: "in"
+            values: ["ml_model", "llm"]
+          - operator: "OR"
+            items:
+              - field: "feature.algorithm.inputs"
+                operator: "contains_any"
+                values:
+                  - "video"
+                  - "facial_expression"
+                  - "voice_analysis"
+                  - "speech_pattern"
+                  - "body_language"
+                  - "eye_contact"
+                  - "facial_recognition"
+              - field: "feature.description"
+                operator: "contains_any"
+                values:
+                  - "video interview"
+                  - "facial analysis"
+                  - "emotion detection"
+      consequence:
+        violation: "potential"
+        risk_score: 75
+        law_reference: "ada-1990:ai-screening-ada"
+        recommendation: |
+          AI video interview analysis may discriminate against individuals
+          with disabilities (speech impediments, facial paralysis, autism)
+          and members of certain racial/ethnic groups. Ensure:
+          1. Tool has been tested for disparate impact
+          2. Reasonable accommodations are available
+          3. Human review is incorporated
+          4. Tool measures job-related qualities only
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Analyze potential discrimination risks from AI video interview
+            analysis, particularly regarding disability and racial bias.
+          required_analysis:
+            - "ada_compliance"
+            - "disparate_impact_risk"
+            - "accommodation_availability"
+
+    - id: "emp-007"
+      name: "Automated Employment Decision Without Human Review"
+      description: |
+        Detects automated systems making final employment decisions without
+        meaningful human oversight.
+      severity: "high"
+      confidence: 0.9
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.feature_type"
+            operator: "equals"
+            value: "automated_decision"
+          - field: "feature.decision_impact"
+            operator: "contains_any"
+            values:
+              - "hiring"
+              - "termination"
+              - "firing"
+              - "promotion"
+              - "demotion"
+          - operator: "NOT"
+            items:
+              - field: "feature.description"
+                operator: "contains_any"
+                values:
+                  - "human review"
+                  - "human oversight"
+                  - "manual review"
+                  - "human in the loop"
+      consequence:
+        violation: "potential"
+        risk_score: 70
+        law_reference: "title-vii-1964:ai-decisions"
+        recommendation: |
+          Automated employment decisions without human review pose significant
+          legal risk. Implement meaningful human oversight for all consequential
+          employment decisions. Document human review process.
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Analyze the adequacy of human oversight in this automated
+            employment decision system.
+          required_analysis:
+            - "level_of_automation"
+            - "human_review_meaningfulness"
+            - "appeals_process"
+
+    # =========================================================================
+    # MEDIUM SEVERITY RULES - Moderate risk requiring review
+    # =========================================================================
+
+    - id: "emp-008"
+      name: "Education Requirements Without Validation"
+      description: |
+        Detects education requirements that may not be job-related and could
+        cause disparate impact.
+      severity: "medium"
+      confidence: 0.7
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.category"
+            operator: "equals"
+            value: "hiring"
+          - field: "feature.data_fields[*].name"
+            operator: "contains_any"
+            values:
+              - "degree"
+              - "education"
+              - "diploma"
+              - "college"
+              - "university"
+          - field: "feature.data_fields[*].used_in_decisions"
+            operator: "equals"
+            value: true
+      consequence:
+        violation: "potential"
+        risk_score: 50
+        law_reference: "title-vii-1964:pp-disparate-impact"
+        recommendation: |
+          Education requirements may cause disparate impact based on race
+          and national origin (Griggs v. Duke Power). Ensure education
+          requirements are validated as job-related and consistent with
+          business necessity.
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Evaluate whether education requirements for this position are
+            job-related and consistent with business necessity.
+          required_analysis:
+            - "job_relatedness"
+            - "business_necessity"
+            - "disparate_impact_data"
+
+    - id: "emp-009"
+      name: "Criminal Background Check Without Policy"
+      description: |
+        Detects use of criminal background in hiring without appropriate
+        individualized assessment policy.
+      severity: "medium"
+      confidence: 0.75
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.category"
+            operator: "equals"
+            value: "hiring"
+          - field: "feature.data_fields[*].name"
+            operator: "contains_any"
+            values:
+              - "criminal_history"
+              - "background_check"
+              - "conviction"
+              - "arrest_record"
+              - "criminal_record"
+      consequence:
+        violation: "potential"
+        risk_score: 55
+        law_reference: "title-vii-1964:pp-disparate-impact"
+        recommendation: |
+          Criminal history screening can cause significant disparate impact
+          on race. EEOC guidance requires:
+          1. Exclusion policy targets specific offenses related to job
+          2. Individualized assessment of circumstances
+          3. Consideration of time elapsed and rehabilitation
+          4. Never use arrest records alone as basis for exclusion
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Analyze criminal background screening policy for compliance
+            with EEOC guidance on disparate impact.
+          required_analysis:
+            - "job_relatedness_of_exclusion"
+            - "individualized_assessment"
+            - "disparate_impact_considerations"
+
+    - id: "emp-010"
+      name: "Credit Check for Non-Financial Position"
+      description: |
+        Detects use of credit history for positions where it may not be
+        job-related.
+      severity: "medium"
+      confidence: 0.8
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.category"
+            operator: "equals"
+            value: "hiring"
+          - field: "feature.data_fields[*].name"
+            operator: "contains_any"
+            values:
+              - "credit_score"
+              - "credit_history"
+              - "credit_check"
+              - "credit_report"
+          - operator: "NOT"
+            items:
+              - field: "feature.description"
+                operator: "contains_any"
+                values:
+                  - "financial"
+                  - "fiduciary"
+                  - "banking"
+                  - "money handling"
+                  - "accounting"
+      consequence:
+        violation: "potential"
+        risk_score: 50
+        law_reference: "title-vii-1964:pp-disparate-impact"
+        recommendation: |
+          Credit checks can cause disparate impact on race and national origin.
+          Ensure credit requirements are job-related and consistent with
+          business necessity. Many states have laws restricting credit checks
+          in employment.
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Evaluate whether credit check requirements are job-related for
+            this position.
+          required_analysis:
+            - "job_relatedness"
+            - "state_law_compliance"
+            - "disparate_impact_considerations"
+
+    - id: "emp-011"
+      name: "Personality Assessment in Hiring"
+      description: |
+        Detects use of personality assessments that may disadvantage certain
+        protected groups, particularly those with mental health conditions.
+      severity: "medium"
+      confidence: 0.7
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.category"
+            operator: "equals"
+            value: "hiring"
+          - field: "feature.feature_type"
+            operator: "in"
+            values: ["algorithm", "scoring_model"]
+          - field: "feature.algorithm.inputs"
+            operator: "contains_any"
+            values:
+              - "personality"
+              - "personality_score"
+              - "psychological"
+              - "behavioral_assessment"
+              - "traits"
+      consequence:
+        violation: "potential"
+        risk_score: 45
+        law_reference: "ada-1990:ai-screening-ada"
+        recommendation: |
+          Personality assessments may constitute medical examinations under
+          ADA if they reveal mental health conditions. They may also
+          disadvantage neurodivergent candidates. Ensure:
+          1. Assessment is validated for job-relatedness
+          2. It does not reveal mental health conditions
+          3. Accommodations are available
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Analyze whether this personality assessment complies with ADA
+            and could disadvantage protected groups.
+          required_analysis:
+            - "ada_medical_examination_analysis"
+            - "validation_status"
+            - "accommodation_availability"
+
+    # =========================================================================
+    # LOW SEVERITY RULES - Minor concerns to monitor
+    # =========================================================================
+
+    - id: "emp-012"
+      name: "English Language Requirement"
+      description: |
+        Detects English language requirements that may need business
+        justification to avoid national origin discrimination.
+      severity: "low"
+      confidence: 0.75
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.data_fields[*].name"
+            operator: "contains_any"
+            values:
+              - "english_proficiency"
+              - "language"
+              - "accent"
+              - "fluency"
+          - field: "feature.data_fields[*].used_in_decisions"
+            operator: "equals"
+            value: true
+      consequence:
+        violation: "potential"
+        risk_score: 30
+        law_reference: "title-vii-1964:pp-disparate-impact"
+        recommendation: |
+          English language requirements may discriminate based on national
+          origin. English-only rules are only permitted when justified by
+          business necessity. Accent discrimination is prohibited unless
+          accent materially interferes with job performance.
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Evaluate whether English language requirements are justified
+            by business necessity for this position.
+          required_analysis:
+            - "business_necessity"
+            - "job_relatedness"
+
+    - id: "emp-013"
+      name: "Social Media Screening"
+      description: |
+        Detects use of social media in hiring decisions, which may reveal
+        protected class information.
+      severity: "low"
+      confidence: 0.65
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.category"
+            operator: "equals"
+            value: "hiring"
+          - field: "feature.data_fields[*].source"
+            operator: "equals"
+            value: "third_party"
+          - field: "feature.data_fields[*].name"
+            operator: "contains_any"
+            values:
+              - "social_media"
+              - "facebook"
+              - "linkedin"
+              - "twitter"
+              - "instagram"
+              - "online_profile"
+      consequence:
+        violation: "potential"
+        risk_score: 35
+        law_reference: "title-vii-1964:pp-disparate-treatment"
+        recommendation: |
+          Social media screening may reveal protected class information
+          (religion, disability, pregnancy, national origin). If using:
+          1. Have consistent policy applied to all candidates
+          2. Train reviewers on what cannot be considered
+          3. Document decisions carefully
+          4. Consider having non-decision-maker conduct review
+        escalate_to_llm: true
+        llm_context:
+          question: |
+            Analyze risks of social media screening in hiring and
+            recommend safeguards.
+          required_analysis:
+            - "protected_class_exposure_risk"
+            - "recommended_safeguards"
+
+    # =========================================================================
+    # POSITIVE INDICATORS - Compliance-enhancing features
+    # =========================================================================
+
+    - id: "emp-pos-001"
+      name: "Bias Audit Conducted"
+      description: "Recognizes when bias testing has been performed on algorithms."
+      severity: "positive"
+      confidence: 1.0
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.algorithm.bias_testing_done"
+            operator: "equals"
+            value: true
+      consequence:
+        violation: false
+        risk_score: -10
+        law_reference: "best_practice"
+        recommendation: |
+          Positive: Bias testing conducted. Ensure regular re-auditing
+          and documentation of results.
+        escalate_to_llm: false
+
+    - id: "emp-pos-002"
+      name: "Human Review Incorporated"
+      description: "Recognizes meaningful human oversight in automated decisions."
+      severity: "positive"
+      confidence: 0.9
+      conditions:
+        operator: "AND"
+        items:
+          - field: "feature.description"
+            operator: "contains_any"
+            values:
+              - "human review"
+              - "human oversight"
+              - "manual review"
+              - "human in the loop"
+              - "human decision maker"
+      consequence:
+        violation: false
+        risk_score: -15
+        law_reference: "best_practice"
+        recommendation: |
+          Positive: Human review incorporated. Ensure reviewers are trained
+          on civil rights compliance and have authority to override
+          automated recommendations.
+        escalate_to_llm: false

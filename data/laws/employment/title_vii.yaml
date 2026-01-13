@@ -1,0 +1,364 @@
+# Title VII of the Civil Rights Act of 1964
+# Federal employment discrimination law
+
+law:
+  id: "title-vii-1964"
+  name: "Title VII of the Civil Rights Act of 1964"
+  citation: "42 U.S.C. § 2000e et seq."
+  category: "employment"
+  effective_date: "1964-07-02"
+  last_amended: "1991-11-21"  # Civil Rights Act of 1991
+
+  summary: |
+    Title VII prohibits employment discrimination based on race, color,
+    religion, sex, and national origin. It applies to employers with 15
+    or more employees, employment agencies, labor organizations, and
+    joint labor-management committees.
+
+  protected_classes:
+    - id: "race"
+      name: "Race"
+      description: "Protection against discrimination based on racial identity"
+      examples:
+        - "Hiring decisions based on race"
+        - "Differential treatment of employees by race"
+        - "Racial harassment in the workplace"
+
+    - id: "color"
+      name: "Color"
+      description: "Protection against discrimination based on skin color"
+      examples:
+        - "Colorism within same racial group"
+        - "Preference for lighter or darker skin tones"
+
+    - id: "religion"
+      name: "Religion"
+      description: "Protection against discrimination based on religious beliefs"
+      examples:
+        - "Refusal to accommodate religious practices"
+        - "Discrimination based on religious attire"
+        - "Scheduling conflicts with religious observances"
+      accommodation_required: true
+
+    - id: "sex"
+      name: "Sex"
+      description: "Protection against discrimination based on sex, including pregnancy and gender identity"
+      examples:
+        - "Pay discrimination based on gender"
+        - "Sexual harassment"
+        - "Pregnancy discrimination"
+        - "Gender stereotyping"
+      includes:
+        - "pregnancy"
+        - "childbirth"
+        - "related_medical_conditions"
+        - "sexual_orientation"  # Per Bostock v. Clayton County (2020)
+        - "gender_identity"  # Per Bostock v. Clayton County (2020)
+
+    - id: "national_origin"
+      name: "National Origin"
+      description: "Protection against discrimination based on country of origin or ethnicity"
+      examples:
+        - "Discrimination based on accent"
+        - "English-only policies without business necessity"
+        - "Discrimination based on surname or ancestry"
+
+  covered_entities:
+    - id: "private_employers"
+      name: "Private Employers"
+      description: "Private sector employers with 15 or more employees"
+      threshold: 15
+      measurement: "employees_for_20_weeks"
+
+    - id: "state_local_gov"
+      name: "State and Local Governments"
+      description: "State and local government employers regardless of size"
+
+    - id: "federal_gov"
+      name: "Federal Government"
+      description: "Federal government agencies"
+      note: "Different complaint procedures under Section 717"
+
+    - id: "employment_agencies"
+      name: "Employment Agencies"
+      description: "Agencies that regularly procure employees for employers"
+
+    - id: "labor_organizations"
+      name: "Labor Organizations"
+      description: "Unions and labor organizations with 15 or more members"
+
+  prohibited_practices:
+    - id: "pp-disparate-treatment"
+      name: "Disparate Treatment"
+      description: |
+        Intentional discrimination in employment decisions based on
+        membership in a protected class.
+      severity: "critical"
+      elements:
+        - element: "protected_class_membership"
+          description: "Individual is member of a protected class"
+        - element: "adverse_employment_action"
+          description: "Employer took negative action (hiring, firing, demotion, etc.)"
+        - element: "discriminatory_intent"
+          description: "Evidence that protected class was a motivating factor"
+        - element: "similarly_situated"
+          description: "Comparably situated employees treated differently"
+      examples:
+        - "Refusing to hire qualified candidates due to race"
+        - "Terminating employees based on religion"
+        - "Denying promotions based on sex"
+      burden_shifting: "mcdonnell_douglas"
+
+    - id: "pp-disparate-impact"
+      name: "Disparate Impact"
+      description: |
+        Facially neutral employment practices that disproportionately
+        affect members of a protected class without business necessity.
+      severity: "high"
+      elements:
+        - element: "facially_neutral_practice"
+          description: "Policy or practice appears neutral on its face"
+        - element: "disproportionate_impact"
+          description: "Practice causes significantly different outcomes by protected class"
+        - element: "statistical_disparity"
+          description: "Demonstrable statistical evidence of impact"
+        - element: "lack_of_business_necessity"
+          description: "Practice not justified by business necessity or job-related"
+      examples:
+        - "Height/weight requirements not related to job"
+        - "Standardized tests with disparate impact"
+        - "Credit score requirements for non-financial positions"
+        - "Criminal background policies with racial impact"
+      four_fifths_rule: |
+        EEOC uses the four-fifths (80%) rule as a threshold: if the
+        selection rate for a protected group is less than 80% of the
+        rate for the group with the highest rate, adverse impact may exist.
+
+    - id: "pp-harassment"
+      name: "Harassment"
+      description: |
+        Unwelcome conduct based on protected class that creates a hostile
+        work environment or results in tangible employment action.
+      severity: "critical"
+      types:
+        - type: "quid_pro_quo"
+          description: "Submission to conduct made condition of employment"
+        - type: "hostile_work_environment"
+          description: "Conduct severe or pervasive enough to alter work conditions"
+      elements:
+        - element: "unwelcome_conduct"
+          description: "Conduct was unwelcome to the recipient"
+        - element: "based_on_protected_class"
+          description: "Conduct was based on membership in protected class"
+        - element: "severe_or_pervasive"
+          description: "Conduct was severe or pervasive enough to affect work environment"
+        - element: "employer_liability"
+          description: "Employer knew or should have known and failed to act"
+
+    - id: "pp-retaliation"
+      name: "Retaliation"
+      description: |
+        Adverse action against an employee for engaging in protected
+        activity under Title VII.
+      severity: "critical"
+      protected_activities:
+        - "Filing a discrimination complaint"
+        - "Participating in an investigation"
+        - "Opposing discriminatory practices"
+        - "Testifying in proceedings"
+      elements:
+        - element: "protected_activity"
+          description: "Employee engaged in activity protected by Title VII"
+        - element: "adverse_action"
+          description: "Employer took materially adverse action"
+        - element: "causal_connection"
+          description: "Connection between protected activity and adverse action"
+
+    - id: "pp-failure-to-accommodate"
+      name: "Failure to Accommodate Religion"
+      description: |
+        Failure to reasonably accommodate an employee's sincerely held
+        religious beliefs or practices.
+      severity: "high"
+      applies_to: ["religion"]
+      elements:
+        - element: "sincerely_held_belief"
+          description: "Employee holds sincere religious belief"
+        - element: "conflict_with_work"
+          description: "Belief conflicts with employment requirement"
+        - element: "employer_notice"
+          description: "Employer was notified of need for accommodation"
+        - element: "failure_to_accommodate"
+          description: "Employer failed to provide reasonable accommodation"
+        - element: "no_undue_hardship"
+          description: "Accommodation would not cause undue hardship"
+      undue_hardship_standard: |
+        Per Groff v. DeJoy (2023), undue hardship requires showing that
+        the accommodation would result in substantial increased costs
+        in relation to the conduct of the employer's business.
+
+  safe_harbors:
+    - id: "sh-bfoq"
+      name: "Bona Fide Occupational Qualification (BFOQ)"
+      description: |
+        Permits discrimination based on religion, sex, or national origin
+        (but NOT race or color) where reasonably necessary to normal
+        business operations.
+      applies_to:
+        - "religion"
+        - "sex"
+        - "national_origin"
+      excludes:
+        - "race"
+        - "color"
+      conditions:
+        - "Essential to job performance"
+        - "No reasonable alternative exists"
+        - "Substantially all members of excluded class cannot perform"
+      examples:
+        - "Religious organization hiring members of faith"
+        - "Authenticity in entertainment roles"
+        - "Privacy concerns in certain care positions"
+
+    - id: "sh-business-necessity"
+      name: "Business Necessity Defense"
+      description: |
+        Defense to disparate impact claims where practice is job-related
+        and consistent with business necessity.
+      applies_to:
+        - "disparate_impact"
+      conditions:
+        - "Practice is job-related for the position"
+        - "Practice is consistent with business necessity"
+        - "No less discriminatory alternative available"
+      burden: "employer"
+
+    - id: "sh-seniority"
+      name: "Bona Fide Seniority System"
+      description: |
+        Legitimate seniority systems are protected even if they have
+        discriminatory effects, unless adopted with discriminatory intent.
+      conditions:
+        - "System applies equally to all employees"
+        - "Not adopted with discriminatory intent"
+        - "System is applied uniformly"
+
+  enforcement:
+    agency: "Equal Employment Opportunity Commission (EEOC)"
+    filing_deadline:
+      federal: "180 days from discriminatory act"
+      with_state_agency: "300 days from discriminatory act"
+    process:
+      - step: "charge_filing"
+        description: "File charge with EEOC"
+      - step: "investigation"
+        description: "EEOC investigates the charge"
+      - step: "determination"
+        description: "EEOC issues determination"
+      - step: "conciliation"
+        description: "Attempt to resolve through conciliation"
+      - step: "right_to_sue"
+        description: "EEOC issues right to sue letter"
+      - step: "litigation"
+        description: "90 days to file lawsuit after right to sue"
+
+  remedies:
+    - id: "back_pay"
+      name: "Back Pay"
+      description: "Wages lost due to discrimination"
+      limit: "Up to 2 years before charge filing"
+
+    - id: "front_pay"
+      name: "Front Pay"
+      description: "Future lost wages when reinstatement not feasible"
+
+    - id: "reinstatement"
+      name: "Reinstatement"
+      description: "Return to former position"
+
+    - id: "compensatory_damages"
+      name: "Compensatory Damages"
+      description: "Damages for emotional distress, pain, suffering"
+      caps:
+        15_100_employees: 50000
+        101_200_employees: 100000
+        201_500_employees: 200000
+        500_plus_employees: 300000
+
+    - id: "punitive_damages"
+      name: "Punitive Damages"
+      description: "Damages to punish especially egregious conduct"
+      requirement: "Malice or reckless indifference"
+      caps: "Same as compensatory damages"
+      note: "Not available against government employers"
+
+    - id: "attorneys_fees"
+      name: "Attorney's Fees"
+      description: "Reasonable attorney fees for prevailing party"
+
+    - id: "injunctive_relief"
+      name: "Injunctive Relief"
+      description: "Court orders to stop discriminatory practices"
+
+  ai_ml_considerations:
+    - id: "ai-screening"
+      name: "AI-Powered Screening Tools"
+      description: "Automated resume screening and candidate ranking systems"
+      risks:
+        - "Training data may contain historical bias"
+        - "Proxy variables may correlate with protected classes"
+        - "Opaque algorithms may mask discriminatory outcomes"
+      requirements:
+        - "Regular bias audits required"
+        - "Disparate impact analysis on outcomes"
+        - "Human review of automated decisions"
+
+    - id: "ai-assessments"
+      name: "AI-Based Assessments"
+      description: "Automated testing, video interviews, personality assessments"
+      risks:
+        - "May measure traits unrelated to job performance"
+        - "May disadvantage certain protected groups"
+        - "Accessibility concerns for disabled candidates"
+      requirements:
+        - "Job-relatedness validation"
+        - "Adverse impact testing"
+        - "Reasonable accommodations"
+
+    - id: "ai-decisions"
+      name: "Automated Employment Decisions"
+      description: "AI systems making or recommending hiring/termination"
+      risks:
+        - "Lack of transparency in decision-making"
+        - "Difficulty challenging automated decisions"
+        - "Potential for systemic discrimination"
+      requirements:
+        - "Human oversight of consequential decisions"
+        - "Explainability of AI recommendations"
+        - "Appeals process available"
+
+key_cases:
+  - name: "Griggs v. Duke Power Co."
+    citation: "401 U.S. 424 (1971)"
+    holding: "Established disparate impact theory under Title VII"
+    relevance: "Neutral practices with discriminatory effects violate Title VII"
+
+  - name: "McDonnell Douglas Corp. v. Green"
+    citation: "411 U.S. 792 (1973)"
+    holding: "Established burden-shifting framework for disparate treatment"
+    relevance: "Framework for proving intentional discrimination"
+
+  - name: "Meritor Savings Bank v. Vinson"
+    citation: "477 U.S. 57 (1986)"
+    holding: "Recognized hostile work environment sexual harassment"
+    relevance: "Harassment creating hostile environment violates Title VII"
+
+  - name: "Bostock v. Clayton County"
+    citation: "590 U.S. ___ (2020)"
+    holding: "Title VII prohibits discrimination based on sexual orientation and gender identity"
+    relevance: "Sex discrimination includes LGBTQ+ discrimination"
+
+  - name: "Groff v. DeJoy"
+    citation: "600 U.S. ___ (2023)"
+    holding: "Clarified undue hardship standard for religious accommodation"
+    relevance: "Higher bar for employers to deny religious accommodations"

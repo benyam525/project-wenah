@@ -1,0 +1,369 @@
+# Americans with Disabilities Act of 1990
+# Federal disability discrimination law (Title I - Employment)
+
+law:
+  id: "ada-1990"
+  name: "Americans with Disabilities Act of 1990 (Title I)"
+  citation: "42 U.S.C. § 12101 et seq."
+  category: "employment"
+  effective_date: "1992-07-26"
+  last_amended: "2008-09-25"  # ADA Amendments Act of 2008 (ADAAA)
+
+  summary: |
+    The ADA prohibits discrimination against qualified individuals with
+    disabilities in employment. Title I covers hiring, advancement,
+    discharge, compensation, training, and other terms and conditions
+    of employment. Employers must provide reasonable accommodations
+    unless doing so would cause undue hardship.
+
+  protected_classes:
+    - id: "disability"
+      name: "Disability"
+      description: |
+        A physical or mental impairment that substantially limits one
+        or more major life activities; a record of such impairment; or
+        being regarded as having such impairment.
+      categories:
+        - category: "actual_disability"
+          description: "Physical or mental impairment substantially limiting major life activity"
+          examples:
+            - "Mobility impairments"
+            - "Visual or hearing impairments"
+            - "Chronic health conditions (diabetes, epilepsy, cancer)"
+            - "Mental health conditions (depression, PTSD, bipolar disorder)"
+            - "Intellectual disabilities"
+            - "Autism spectrum disorders"
+
+        - category: "record_of_disability"
+          description: "History of disability, even if currently not impaired"
+          examples:
+            - "History of cancer in remission"
+            - "Past mental health treatment"
+            - "Recovered substance abuse disorder"
+
+        - category: "regarded_as"
+          description: "Employer perceives individual as having disability"
+          examples:
+            - "Perceived as disabled based on appearance"
+            - "Refused hire due to assumed limitations"
+          note: "Reasonable accommodation not required for 'regarded as' prong"
+
+  definitions:
+    - term: "major_life_activities"
+      description: "Activities central to daily life"
+      includes:
+        - "Caring for oneself"
+        - "Performing manual tasks"
+        - "Seeing, hearing, speaking"
+        - "Walking, standing, sitting"
+        - "Reaching, lifting, bending"
+        - "Learning, reading, concentrating"
+        - "Thinking, communicating"
+        - "Working"
+        - "Major bodily functions (immune, digestive, neurological, brain, respiratory, circulatory, endocrine, reproductive)"
+
+    - term: "substantially_limits"
+      description: "Impairment that restricts condition, manner, or duration of major life activity"
+      interpretation: |
+        Per ADAAA, should be construed broadly. Episodic conditions and those
+        in remission are disabilities if they would substantially limit when active.
+        Mitigating measures (except ordinary eyeglasses/contacts) are not considered.
+
+    - term: "qualified_individual"
+      description: "Person who can perform essential job functions with or without accommodation"
+      elements:
+        - "Meets job prerequisites (education, experience, skills)"
+        - "Can perform essential functions"
+        - "With or without reasonable accommodation"
+
+    - term: "essential_functions"
+      description: "Fundamental job duties, not marginal functions"
+      factors:
+        - "Position exists to perform the function"
+        - "Limited employees available to perform function"
+        - "Function is highly specialized"
+        - "Employer's judgment"
+        - "Written job descriptions"
+        - "Time spent performing function"
+        - "Consequences of not performing function"
+
+  covered_entities:
+    - id: "private_employers"
+      name: "Private Employers"
+      description: "Private sector employers with 15 or more employees"
+      threshold: 15
+
+    - id: "state_local_gov"
+      name: "State and Local Governments"
+      description: "State and local government employers (Title II)"
+
+    - id: "federal_gov"
+      name: "Federal Government"
+      description: "Covered under Rehabilitation Act Section 501"
+
+    - id: "employment_agencies"
+      name: "Employment Agencies"
+
+    - id: "labor_organizations"
+      name: "Labor Organizations"
+
+  prohibited_practices:
+    - id: "pp-discrimination"
+      name: "Disability Discrimination"
+      description: "Adverse employment action because of disability"
+      severity: "critical"
+      includes:
+        - "Refusing to hire qualified individual with disability"
+        - "Terminating employee because of disability"
+        - "Limiting advancement opportunities"
+        - "Paying less due to disability"
+        - "Segregating employees with disabilities"
+      elements:
+        - element: "qualified_individual"
+          description: "Individual is qualified for the position"
+        - element: "disability"
+          description: "Individual has a disability under ADA"
+        - element: "adverse_action"
+          description: "Employer took adverse employment action"
+        - element: "because_of_disability"
+          description: "Disability was a motivating factor"
+
+    - id: "pp-failure-accommodate"
+      name: "Failure to Provide Reasonable Accommodation"
+      description: "Not providing accommodation that enables job performance"
+      severity: "critical"
+      elements:
+        - element: "known_disability"
+          description: "Employer knows of disability"
+        - element: "accommodation_needed"
+          description: "Individual needs accommodation"
+        - element: "accommodation_requested"
+          description: "Accommodation was requested"
+        - element: "failure_to_provide"
+          description: "Employer failed to provide reasonable accommodation"
+        - element: "no_undue_hardship"
+          description: "Accommodation would not cause undue hardship"
+
+    - id: "pp-medical-inquiries"
+      name: "Prohibited Medical Inquiries"
+      description: "Improper disability-related inquiries or medical exams"
+      severity: "high"
+      stages:
+        - stage: "pre_offer"
+          prohibited:
+            - "Asking about existence or nature of disability"
+            - "Requiring medical examination"
+            - "Asking about prior workers' compensation claims"
+          allowed:
+            - "Asking about ability to perform job functions"
+            - "Asking to demonstrate job-related functions"
+
+        - stage: "post_offer"
+          allowed:
+            - "Medical examination if required of all entering employees"
+            - "Disability-related inquiries"
+          conditions:
+            - "Confidentiality maintained"
+            - "Consistent with business necessity"
+
+        - stage: "employment"
+          allowed:
+            - "Job-related and consistent with business necessity"
+            - "When employee requests accommodation"
+            - "Return to work after medical leave"
+
+    - id: "pp-retaliation"
+      name: "Retaliation"
+      description: "Adverse action for exercising ADA rights"
+      severity: "critical"
+      protected_activities:
+        - "Requesting accommodation"
+        - "Filing ADA complaint"
+        - "Participating in investigation"
+        - "Opposing discriminatory practices"
+
+    - id: "pp-association"
+      name: "Association Discrimination"
+      description: "Discrimination based on association with person with disability"
+      severity: "high"
+      examples:
+        - "Not hiring because spouse has disability"
+        - "Adverse action due to child's medical condition"
+      note: "No accommodation duty for association discrimination"
+
+  reasonable_accommodations:
+    description: |
+      Modifications or adjustments enabling qualified individuals with
+      disabilities to perform essential job functions or enjoy equal
+      employment benefits.
+
+    examples:
+      - category: "job_restructuring"
+        items:
+          - "Reallocating marginal functions"
+          - "Altering when/how functions are performed"
+
+      - category: "schedule_modifications"
+        items:
+          - "Modified work schedules"
+          - "Part-time schedules"
+          - "Leave for treatment"
+
+      - category: "physical_modifications"
+        items:
+          - "Accessible facilities"
+          - "Modified workstations"
+          - "Reserved parking"
+
+      - category: "equipment_modifications"
+        items:
+          - "Assistive technology"
+          - "Modified equipment"
+          - "Screen readers, magnification"
+
+      - category: "policy_modifications"
+        items:
+          - "Modified break schedules"
+          - "Work from home"
+          - "Modified dress code"
+
+      - category: "communication"
+        items:
+          - "Sign language interpreters"
+          - "Written materials in accessible formats"
+          - "Modified training materials"
+
+      - category: "reassignment"
+        items:
+          - "Reassignment to vacant position"
+        note: "Considered accommodation of last resort"
+
+    interactive_process:
+      description: "Good faith dialogue to identify effective accommodation"
+      steps:
+        - "Identify job-related limitations"
+        - "Identify possible accommodations"
+        - "Consider employee preferences"
+        - "Select most appropriate accommodation"
+      employer_duty: "Engage in interactive process in good faith"
+
+  undue_hardship:
+    description: "Significant difficulty or expense in providing accommodation"
+    factors:
+      - "Cost of accommodation"
+      - "Employer's financial resources"
+      - "Number of employees"
+      - "Impact on operations"
+      - "Type of operation"
+      - "Nature of workforce"
+    note: "Case-by-case determination; employer bears burden of proof"
+
+  safe_harbors:
+    - id: "sh-undue-hardship"
+      name: "Undue Hardship Defense"
+      description: "Accommodation causing significant difficulty or expense"
+      factors:
+        - "Nature and net cost of accommodation"
+        - "Overall financial resources"
+        - "Number of employees"
+        - "Effect on expenses and resources"
+        - "Impact on facility operations"
+
+    - id: "sh-direct-threat"
+      name: "Direct Threat Defense"
+      description: "Significant risk of substantial harm"
+      requirements:
+        - "Individualized assessment"
+        - "Based on objective evidence"
+        - "Current, not speculative"
+        - "Cannot be eliminated by accommodation"
+      factors:
+        - "Duration of risk"
+        - "Nature and severity of potential harm"
+        - "Likelihood harm will occur"
+        - "Imminence of potential harm"
+
+    - id: "sh-job-related"
+      name: "Job-Related Standards"
+      description: "Qualification standards that are job-related and consistent with business necessity"
+      requirements:
+        - "Standard is job-related"
+        - "Consistent with business necessity"
+        - "Performance cannot be achieved with accommodation"
+
+  enforcement:
+    agency: "Equal Employment Opportunity Commission (EEOC)"
+    filing_deadline:
+      federal: "180 days from discriminatory act"
+      with_state_agency: "300 days from discriminatory act"
+    process: "Same as Title VII"
+
+  remedies:
+    same_as: "title-vii-1964"
+    note: "Same remedies as Title VII including back pay, compensatory damages, and punitive damages (with caps)"
+
+  ai_ml_considerations:
+    - id: "ai-screening-ada"
+      name: "AI Screening and Disability"
+      description: "Automated tools that may screen out individuals with disabilities"
+      risks:
+        - "Video interview AI may penalize speech patterns, tics, or atypical expressions"
+        - "Resume screening may filter out employment gaps from medical leave"
+        - "Personality assessments may disadvantage neurodivergent candidates"
+        - "Physical ability tests may not account for accommodations"
+      requirements:
+        - "Accessibility of AI tools themselves"
+        - "Testing for disparate impact on disabled individuals"
+        - "Alternative assessment methods available"
+        - "AI must not make prohibited medical inquiries"
+
+    - id: "ai-medical-inference"
+      name: "AI Medical Inference"
+      description: "AI systems inferring disability status"
+      risks:
+        - "AI may infer disability from behavioral patterns"
+        - "Biometric data may reveal health conditions"
+        - "Social media analysis may reveal disability"
+      prohibitions:
+        - "Cannot use AI to make disability-related inquiries pre-offer"
+        - "Cannot use AI to infer disability for adverse decisions"
+
+    - id: "ai-accommodation"
+      name: "AI in Accommodation Process"
+      description: "Using AI to evaluate accommodation requests"
+      requirements:
+        - "Human review of accommodation decisions"
+        - "Individualized assessment required"
+        - "Cannot use automated denial of accommodations"
+
+key_cases:
+  - name: "Toyota Motor Mfg. v. Williams"
+    citation: "534 U.S. 184 (2002)"
+    holding: "Narrow interpretation of 'substantially limits'"
+    note: "Superseded by ADAAA, which rejected this interpretation"
+
+  - name: "US Airways v. Barnett"
+    citation: "535 U.S. 391 (2002)"
+    holding: "Reassignment to vacant position is reasonable accommodation"
+    relevance: "Clarified scope of reassignment accommodation"
+
+  - name: "Sutton v. United Air Lines"
+    citation: "527 U.S. 471 (1999)"
+    holding: "Mitigating measures considered in disability determination"
+    note: "Superseded by ADAAA"
+
+  - name: "EEOC v. Abercrombie & Fitch"
+    citation: "575 U.S. 768 (2015)"
+    holding: "Employer cannot avoid accommodation by claiming ignorance"
+    relevance: "Applies to ADA as well - employer knowledge standard"
+
+eeoc_guidance:
+  - title: "Enforcement Guidance on Reasonable Accommodation"
+    url: "https://www.eeoc.gov/laws/guidance/enforcement-guidance-reasonable-accommodation-and-undue-hardship-under-ada"
+
+  - title: "Guidance on AI and Algorithmic Fairness"
+    url: "https://www.eeoc.gov/laws/guidance/americans-disabilities-act-and-use-software-algorithms-and-artificial-intelligence"
+    key_points:
+      - "Employers may be liable for discriminatory AI even if developed by vendor"
+      - "AI tools must be accessible to individuals with disabilities"
+      - "Algorithmic decision-making tools must comply with ADA"

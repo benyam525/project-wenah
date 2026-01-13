@@ -1,0 +1,21 @@
+# Default owners for everything in the repo
+*       @project-wenah-team
+
+# Core engine components
+/src/wenah/core/      @project-wenah-team
+/src/wenah/rules/     @project-wenah-team
+
+# LLM integration
+/src/wenah/llm/       @project-wenah-team
+
+# API layer
+/src/wenah/api/       @project-wenah-team
+
+# Infrastructure
+/Dockerfile           @project-wenah-team
+/docker-compose.yml   @project-wenah-team
+/.github/             @project-wenah-team
+
+# Documentation
+/docs/                @project-wenah-team
+*.md                  @project-wenah-team

@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Main Wenah API service
+  wenah-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: wenah-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - CHROMA_PERSIST_DIRECTORY=/app/data/vector_db
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DEBUG=${DEBUG:-false}
+      - RULE_ENGINE_BASE_WEIGHT=${RULE_ENGINE_BASE_WEIGHT:-0.6}
+      - LLM_ANALYSIS_BASE_WEIGHT=${LLM_ANALYSIS_BASE_WEIGHT:-0.4}
+      - ENABLE_HALLUCINATION_GUARDRAILS=${ENABLE_HALLUCINATION_GUARDRAILS:-true}
+    volumes:
+      - wenah-vector-db:/app/data/vector_db
+      - wenah-logs:/app/data/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - wenah-network
+
+  # Development service with hot reload
+  wenah-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: wenah-dev
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-20250514}
+      - CHROMA_PERSIST_DIRECTORY=/app/data/vector_db
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DEBUG=true
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+    command: uvicorn wenah.api.main:app --host 0.0.0.0 --port 8000 --reload
+    profiles:
+      - dev
+    networks:
+      - wenah-network
+
+volumes:
+  wenah-vector-db:
+    driver: local
+  wenah-logs:
+    driver: local
+
+networks:
+  wenah-network:
+    driver: bridge
