@@ -723,6 +723,278 @@
             text-align: right;
         }
 
+        /* Executive Summary */
+        .executive-summary {
+            background: rgba(212, 175, 55, 0.08);
+            border-left: 3px solid var(--gold);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .executive-summary-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+        }
+
+        .executive-summary-title {
+            font-size: 0.85rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .executive-summary-text {
+            color: var(--smoke);
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .executive-summary.placeholder .executive-summary-text {
+            color: var(--silver);
+            font-style: italic;
+        }
+
+        /* Confidence Badge */
+        .confidence-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--slate);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            color: var(--silver);
+            margin-left: var(--space-sm);
+        }
+
+        .confidence-badge .confidence-value {
+            color: var(--pearl);
+            font-weight: 600;
+        }
+
+        /* Human Review Alert */
+        .human-review-alert {
+            display: none;
+            align-items: center;
+            gap: var(--space-sm);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--critical);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-md);
+            margin-top: var(--space-sm);
+            color: var(--critical);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .human-review-alert.show { display: flex; }
+
+        .human-review-alert svg {
+            flex-shrink: 0;
+        }
+
+        /* Extracted Fields Section */
+        .extracted-fields-section {
+            margin: var(--space-lg) 0;
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--slate);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            color: var(--silver);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .section-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            background: var(--slate);
+            color: var(--smoke);
+        }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: var(--space-sm);
+        }
+
+        .field-card {
+            background: var(--slate);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-card.warning {
+            border-left: 2px solid var(--critical);
+        }
+
+        .field-name {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--pearl);
+        }
+
+        .field-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .field-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .field-badge.proxy {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--critical);
+        }
+
+        .field-badge.protected {
+            background: rgba(229, 138, 77, 0.2);
+            color: var(--high);
+        }
+
+        .field-badge.decision {
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--gold);
+        }
+
+        .fields-empty {
+            text-align: center;
+            padding: var(--space-lg);
+            color: var(--silver);
+            font-size: 0.85rem;
+        }
+
+        /* Key Concerns Section */
+        .key-concerns-section {
+            margin: var(--space-lg) 0;
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--slate);
+        }
+
+        .concerns-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .concern-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            padding: var(--space-sm) 0;
+            color: var(--smoke);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .concern-bullet {
+            color: var(--high);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .concerns-empty {
+            color: var(--minimal);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        /* Recommendations Section */
+        .recommendations-section {
+            margin: var(--space-lg) 0;
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--slate);
+        }
+
+        .recommendations-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--onyx);
+            border-radius: var(--radius-md);
+        }
+
+        .rec-priority {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+
+        .rec-priority.p1 { background: var(--critical); color: white; }
+        .rec-priority.p2 { background: var(--high); color: white; }
+        .rec-priority.p3 { background: var(--medium); color: var(--obsidian); }
+        .rec-priority.p4 { background: var(--slate); color: var(--smoke); }
+
+        .rec-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .rec-text {
+            color: var(--smoke);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .rec-rationale {
+            font-size: 0.75rem;
+            color: var(--silver);
+            margin-top: 2px;
+        }
+
+        .rec-effort {
+            font-size: 0.7rem;
+            color: var(--silver);
+            padding: 4px 8px;
+            background: var(--slate);
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+            text-transform: capitalize;
+        }
+
+        .recommendations-empty {
+            text-align: center;
+            padding: var(--space-md);
+            color: var(--minimal);
+            font-size: 0.85rem;
+        }
+
         /* Violations List */
         .violations-list {
             display: flex;
@@ -1313,6 +1585,20 @@
                         </div>
                     </div>
                     <div class="panel-content">
+                        <!-- Executive Summary -->
+                        <div class="executive-summary placeholder" id="executive-summary">
+                            <div class="executive-summary-header">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                </svg>
+                                <span class="executive-summary-title">Executive Summary</span>
+                            </div>
+                            <p class="executive-summary-text">Run an assessment to see AI-generated compliance analysis.</p>
+                        </div>
+
                         <!-- Risk Score Visualization -->
                         <div class="risk-score-container">
                             <div class="risk-gauge">
@@ -1333,25 +1619,62 @@
                             <div class="risk-details">
                                 <div class="risk-level high">
                                     <span class="risk-level-dot"></span>
-                                    High Risk
+                                    <span class="risk-level-text">High Risk</span>
+                                    <span class="confidence-badge" id="confidence-badge">
+                                        <span class="confidence-value">--</span>
+                                        <span>confidence</span>
+                                    </span>
                                 </div>
-                                <div class="risk-breakdown">
-                                    <div class="risk-breakdown-item">
-                                        <span class="risk-breakdown-label">Rule Engine</span>
-                                        <div class="risk-breakdown-bar">
-                                            <div class="risk-breakdown-fill rules" style="width: 72%"></div>
-                                        </div>
-                                        <span class="risk-breakdown-value">72%</span>
-                                    </div>
-                                    <div class="risk-breakdown-item">
-                                        <span class="risk-breakdown-label">LLM Analysis</span>
-                                        <div class="risk-breakdown-bar">
-                                            <div class="risk-breakdown-fill llm" style="width: 58%"></div>
-                                        </div>
-                                        <span class="risk-breakdown-value">58%</span>
-                                    </div>
+                                <!-- Human Review Alert -->
+                                <div class="human-review-alert" id="human-review-alert">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                        <line x1="12" y1="9" x2="12" y2="13"/>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                    </svg>
+                                    <span>Requires Human Review</span>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Extracted Data Fields -->
+                        <div class="extracted-fields-section" id="extracted-fields-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                                    </svg>
+                                    Detected Data Fields
+                                </h3>
+                                <span class="section-badge" id="extraction-confidence">Extraction: --</span>
+                            </div>
+                            <div class="fields-grid" id="fields-grid">
+                                <div class="fields-empty">No data fields detected yet. Run an assessment.</div>
+                            </div>
+                        </div>
+
+                        <!-- Key Concerns -->
+                        <div class="key-concerns-section" id="key-concerns-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="12" y1="8" x2="12" y2="12"/>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                    </svg>
+                                    Key Concerns
+                                </h3>
+                            </div>
+                            <ul class="concerns-list" id="concerns-list">
+                                <li class="concerns-empty">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                    Run an assessment to identify key concerns
+                                </li>
+                            </ul>
                         </div>
 
                         <!-- Violations List -->
@@ -1437,6 +1760,23 @@
                                         <span class="violation-score">Score: 55</span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommendations Section -->
+                        <div class="recommendations-section" id="recommendations-section">
+                            <div class="section-header">
+                                <h3 class="section-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="12" y1="16" x2="12" y2="12"/>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                                    </svg>
+                                    Recommendations
+                                </h3>
+                            </div>
+                            <div class="recommendations-list" id="recommendations-list">
+                                <div class="recommendations-empty">Run an assessment to get actionable recommendations.</div>
                             </div>
                         </div>
                     </div>
@@ -1795,6 +2135,7 @@
             const gaugeCircle = document.querySelector('.risk-gauge-fill');
             const gaugeValue = document.querySelector('.risk-gauge-value');
             const riskLevelBadge = document.querySelector('.risk-level');
+            const riskLevelText = document.querySelector('.risk-level-text');
             const circumference = 2 * Math.PI * 80;
             const offset = circumference - (score / 100) * circumference;
 
@@ -1808,10 +2149,16 @@
             // Update value
             animateValue(gaugeValue, parseInt(gaugeValue.textContent) || 0, Math.round(score), 800);
 
-            // Update badge
+            // Update badge class (without replacing content)
             const levelClass = getRiskLevelClass(score);
             riskLevelBadge.className = `risk-level ${levelClass}`;
-            riskLevelBadge.innerHTML = `<span class="risk-level-dot"></span>${getRiskLevelLabel(score)} Risk`;
+
+            // Update just the text span if it exists, otherwise update the whole badge
+            if (riskLevelText) {
+                riskLevelText.textContent = `${getRiskLevelLabel(score)} Risk`;
+            } else {
+                riskLevelBadge.innerHTML = `<span class="risk-level-dot"></span>${getRiskLevelLabel(score)} Risk`;
+            }
         }
 
         function updateViolationsList(violations) {
@@ -1857,6 +2204,170 @@
                 item.addEventListener('mouseenter', () => item.style.transform = 'translateX(4px)');
                 item.addEventListener('mouseleave', () => item.style.transform = 'translateX(0)');
             });
+        }
+
+        function updateExecutiveSummary(summary) {
+            const summaryEl = document.getElementById('executive-summary');
+            const textEl = summaryEl?.querySelector('.executive-summary-text');
+
+            if (!textEl) return;
+
+            if (summary && summary.trim()) {
+                summaryEl.classList.remove('placeholder');
+                textEl.textContent = summary;
+            } else {
+                summaryEl.classList.add('placeholder');
+                textEl.textContent = 'Run an assessment to see AI-generated compliance analysis.';
+            }
+        }
+
+        function updateConfidence(confidence) {
+            const badge = document.getElementById('confidence-badge');
+            const valueEl = badge?.querySelector('.confidence-value');
+
+            if (!valueEl) return;
+
+            if (confidence !== undefined && confidence !== null) {
+                const percent = Math.round(confidence * 100);
+                valueEl.textContent = `${percent}%`;
+            } else {
+                valueEl.textContent = '--';
+            }
+        }
+
+        function toggleHumanReviewAlert(show) {
+            const alert = document.getElementById('human-review-alert');
+            if (!alert) return;
+
+            if (show) {
+                alert.classList.add('show');
+            } else {
+                alert.classList.remove('show');
+            }
+        }
+
+        function renderExtractedFields(fields) {
+            const grid = document.getElementById('fields-grid');
+            const confidenceEl = document.getElementById('extraction-confidence');
+
+            if (!grid) return;
+
+            if (!fields || fields.length === 0) {
+                grid.innerHTML = '<div class="fields-empty">No data fields detected yet. Run an assessment.</div>';
+                if (confidenceEl) confidenceEl.textContent = 'Extraction: --';
+                return;
+            }
+
+            grid.innerHTML = fields.map(field => {
+                const hasWarning = field.potential_proxy || field.used_in_decisions;
+                const badges = [];
+
+                if (field.potential_proxy) {
+                    badges.push(`<span class="field-badge proxy">Proxy: ${field.potential_proxy}</span>`);
+                }
+                if (field.used_in_decisions) {
+                    badges.push('<span class="field-badge decision">Decision input</span>');
+                }
+
+                return `
+                    <div class="field-card ${hasWarning ? 'warning' : ''}">
+                        <span class="field-name">${field.name}</span>
+                        ${field.description ? `<span class="field-description" style="font-size: 0.75rem; color: var(--silver);">${field.description}</span>` : ''}
+                        ${badges.length ? `<div class="field-badges">${badges.join('')}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Update extraction confidence if available in first field's parent
+            if (confidenceEl) {
+                confidenceEl.textContent = `${fields.length} fields detected`;
+            }
+        }
+
+        function renderKeyConcerns(violations) {
+            const list = document.getElementById('concerns-list');
+            if (!list) return;
+
+            // Extract unique concerns from violations
+            const concerns = [];
+
+            if (violations && violations.length > 0) {
+                // Get unique law names/descriptions as concerns
+                const seenConcerns = new Set();
+
+                violations.forEach(v => {
+                    const concern = v.law_name || v.description?.substring(0, 60);
+                    if (concern && !seenConcerns.has(concern)) {
+                        seenConcerns.add(concern);
+                        concerns.push(concern);
+                    }
+                });
+
+                // Add generic concerns based on violation count
+                if (violations.length >= 3) {
+                    concerns.unshift('Multiple compliance risks detected');
+                }
+
+                // Check for high severity violations
+                const criticalCount = violations.filter(v =>
+                    v.severity === 'critical' || v.severity === 'high'
+                ).length;
+                if (criticalCount > 0) {
+                    concerns.unshift(`${criticalCount} high-severity issue${criticalCount > 1 ? 's' : ''} require immediate attention`);
+                }
+            }
+
+            if (concerns.length === 0) {
+                list.innerHTML = `
+                    <li class="concerns-empty">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        No critical concerns identified
+                    </li>
+                `;
+                return;
+            }
+
+            // Limit to top 5 concerns
+            const topConcerns = concerns.slice(0, 5);
+
+            list.innerHTML = topConcerns.map(concern => `
+                <li class="concern-item">
+                    <span class="concern-bullet">&#8226;</span>
+                    <span>${concern}</span>
+                </li>
+            `).join('');
+        }
+
+        function renderRecommendations(recommendations) {
+            const list = document.getElementById('recommendations-list');
+            if (!list) return;
+
+            if (!recommendations || recommendations.length === 0) {
+                list.innerHTML = '<div class="recommendations-empty">Run an assessment to get actionable recommendations.</div>';
+                return;
+            }
+
+            // Sort by priority and take top 5
+            const sorted = [...recommendations].sort((a, b) => (a.priority || 99) - (b.priority || 99));
+            const top5 = sorted.slice(0, 5);
+
+            list.innerHTML = top5.map((rec, index) => {
+                const priority = rec.priority || (index + 1);
+                const priorityClass = priority <= 1 ? 'p1' : priority <= 2 ? 'p2' : priority <= 3 ? 'p3' : 'p4';
+
+                return `
+                    <div class="recommendation-item">
+                        <span class="rec-priority ${priorityClass}">P${priority}</span>
+                        <div class="rec-content">
+                            <div class="rec-text">${rec.recommendation || rec.description || 'Review compliance requirement'}</div>
+                            ${rec.rationale ? `<div class="rec-rationale">${rec.rationale}</div>` : ''}
+                        </div>
+                        ${rec.estimated_effort ? `<span class="rec-effort">${rec.estimated_effort}</span>` : ''}
+                    </div>
+                `;
+            }).join('');
         }
 
         function addActivityItem(text, type = 'assessment', assessmentId = null) {
@@ -2040,7 +2551,8 @@
                             recommendations: result.recommendations || [],
                             extracted_fields: result.extracted_fields || [],
                             executive_summary: result.executive_summary,
-                            requires_human_review: result.requires_human_review
+                            requires_human_review: result.requires_human_review,
+                            extraction_confidence: result.extraction_confidence
                         };
                     } else {
                         // Demo mode - simulate response
@@ -2133,6 +2645,50 @@
                     });
                 }
 
+                // Generate demo extracted fields based on description keywords
+                const extractedFields = [];
+                const desc = (feature.description || '').toLowerCase();
+                if (desc.includes('zip') || desc.includes('address') || desc.includes('location')) {
+                    extractedFields.push({ name: 'zip_code', description: 'Geographic location data', potential_proxy: 'race', used_in_decisions: true });
+                }
+                if (desc.includes('age') || desc.includes('birth') || desc.includes('year')) {
+                    extractedFields.push({ name: 'age', description: 'Age or birth date', potential_proxy: 'age', used_in_decisions: true });
+                }
+                if (desc.includes('name') || desc.includes('first') || desc.includes('last')) {
+                    extractedFields.push({ name: 'name', description: 'Applicant name', potential_proxy: 'national_origin', used_in_decisions: true });
+                }
+                if (desc.includes('facial') || desc.includes('face') || desc.includes('video')) {
+                    extractedFields.push({ name: 'facial_recognition', description: 'Facial analysis data', potential_proxy: 'race', used_in_decisions: true });
+                }
+                if (desc.includes('employment') || desc.includes('gap') || desc.includes('history')) {
+                    extractedFields.push({ name: 'employment_gaps', description: 'Career history gaps', potential_proxy: 'sex', used_in_decisions: true });
+                }
+
+                // Generate demo recommendations
+                const recommendations = [];
+                if (score >= 40) {
+                    recommendations.push({
+                        priority: 1,
+                        recommendation: 'Review data fields for potential proxy discrimination',
+                        rationale: 'Some collected data may correlate with protected classes',
+                        estimated_effort: 'Low'
+                    });
+                }
+                if (score >= 60) {
+                    recommendations.push({
+                        priority: 2,
+                        recommendation: 'Implement human review for adverse decisions',
+                        rationale: 'Automated decisions require human oversight',
+                        estimated_effort: 'Medium'
+                    });
+                    recommendations.push({
+                        priority: 3,
+                        recommendation: 'Conduct disparate impact analysis',
+                        rationale: 'Required for compliance verification',
+                        estimated_effort: 'High'
+                    });
+                }
+
                 return {
                     overall_score: score,
                     risk_level: getRiskLevelClass(score),
@@ -2146,13 +2702,26 @@
                         score: score,
                         violations: violations
                     }],
-                    violations: violations
+                    violations: violations,
+                    // New fields for enhanced analysis
+                    executive_summary: score >= 60
+                        ? `This ${feature.category} feature presents compliance concerns due to potential disparate impact on protected classes. Review data collection practices and decision criteria.`
+                        : score >= 40
+                        ? `This feature has moderate compliance risk. Consider implementing additional safeguards for automated decisions.`
+                        : `Analysis complete. No significant compliance concerns identified for this feature.`,
+                    extracted_fields: extractedFields,
+                    extraction_confidence: 0.7 + Math.random() * 0.2,
+                    requires_human_review: score >= 60,
+                    recommendations: recommendations
                 };
             }
 
             displayAssessmentResult(result, featureName) {
+                // Get the risk score from either field
+                const riskScore = result.risk_score ?? result.overall_score ?? 0;
+
                 // Update risk gauge
-                updateRiskGauge(result.overall_score);
+                updateRiskGauge(riskScore);
 
                 // Update stats
                 const statCards = document.querySelectorAll('.stat-value');
@@ -2163,26 +2732,28 @@
                     animateValue(statCards[0], parseInt(statCards[0].textContent) || 0, criticalCount, 500);
                 }
 
+                // Update executive summary
+                updateExecutiveSummary(result.executive_summary);
+
+                // Update confidence badge
+                updateConfidence(result.extraction_confidence);
+
+                // Show/hide human review alert
+                toggleHumanReviewAlert(result.requires_human_review);
+
+                // Render extracted fields
+                renderExtractedFields(result.extracted_fields);
+
+                // Render key concerns (derived from violations)
+                renderKeyConcerns(result.violations);
+
                 // Update violations list
                 const allViolations = result.violations ||
                     result.feature_scores?.flatMap(f => f.violations || []) || [];
                 updateViolationsList(allViolations);
 
-                // Update breakdown bars
-                const ruleScore = result.overall_score * (0.9 + Math.random() * 0.2);
-                const llmScore = result.overall_score * (0.7 + Math.random() * 0.3);
-
-                const breakdownBars = document.querySelectorAll('.risk-breakdown-fill');
-                const breakdownValues = document.querySelectorAll('.risk-breakdown-value');
-
-                if (breakdownBars[0]) {
-                    breakdownBars[0].style.width = `${Math.min(100, ruleScore)}%`;
-                    if (breakdownValues[0]) breakdownValues[0].textContent = `${Math.round(ruleScore)}%`;
-                }
-                if (breakdownBars[1]) {
-                    breakdownBars[1].style.width = `${Math.min(100, llmScore)}%`;
-                    if (breakdownValues[1]) breakdownValues[1].textContent = `${Math.round(llmScore)}%`;
-                }
+                // Render recommendations
+                renderRecommendations(result.recommendations);
             }
 
             handleExport() {
