@@ -1,46 +1,58 @@
-# Project Wenah
+# Wenah - Civil Rights Compliance Framework
 
-Civil Rights Compliance Framework for Responsible Product Development.
-
-A Python-based ML framework that helps companies build responsible products by evaluating them against federal and state civil rights laws. Uses a hybrid approach combining deterministic decision tree rules with Claude-powered RAG analysis.
+A Python-based ML framework that helps companies build responsible products by evaluating them against federal and state civil rights laws.
 
 ## Features
 
-- **Risk Assessment Dashboard** - Comprehensive compliance risk scoring
-- **Design Guidance** - Product design compliance recommendations
-- **Pre-launch Compliance Check** - Final verification before deployment
-
-## Installation
-
-```bash
-pip install -e .
-```
+- **Risk Assessment Dashboard** - Evaluate products for civil rights compliance
+- **Hybrid Analysis** - Combines deterministic rule engine with LLM-powered analysis
+- **Multiple Categories** - Employment (Title VII, ADA), Housing (FHA), Consumer (ECOA, FCRA)
+- **Design Guidance** - Get compliance recommendations during product development
+- **Pre-launch Checks** - Verify compliance before going live
 
 ## Quick Start
 
-```python
-from wenah.core.engine import get_compliance_engine
-from wenah.core.types import ProductFeatureInput, ProductCategory, FeatureType
+```bash
+# Install dependencies
+pip install -e .
 
-engine = get_compliance_engine()
+# Run the API server
+uvicorn wenah.api.main:app --reload
 
-# Assess a feature
-analysis = engine.assess_feature(feature)
-print(analysis.explanation)
+# Open http://localhost:8000/docs for API documentation
 ```
+
+## API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/v1/assess/quick` | Quick compliance assessment |
+| `POST /api/v1/assess/risk` | Full risk assessment with LLM analysis |
+| `POST /api/v1/guidance/design` | Get design-phase guidance |
+| `POST /api/v1/check/prelaunch` | Pre-launch compliance check |
 
 ## Architecture
 
-- **Rule Engine**: Deterministic compliance rules based on civil rights law
-- **RAG Pipeline**: Claude-powered nuanced analysis with hallucination guardrails
-- **Unified Scoring**: Combines rule and LLM scores with confidence intervals
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    API Layer (FastAPI)                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│              Compliance Engine (Orchestrator)                │
+│  ┌──────────────────┐       ┌──────────────────────────┐    │
+│  │   Rule Engine    │       │   LLM Pipeline (RAG)     │    │
+│  │  Deterministic   │──────▶│  Claude Analysis         │    │
+│  │  Confidence: 1.0 │       │  + Guardrails            │    │
+│  └──────────────────┘       └──────────────────────────┘    │
+└──────────────────────────────────────────────────────────────┘
+```
 
-## Law Coverage
+## Live Demo
 
-- Employment: Title VII, ADA
-- Housing: FHA (coming soon)
-- Consumer: ECOA, FCRA (coming soon)
+- **Frontend Dashboard**: https://wenah-dashboard.vercel.app
+- **API Documentation**: Available at `/docs` when running locally
 
 ## License
 
-Proprietary
+MIT
