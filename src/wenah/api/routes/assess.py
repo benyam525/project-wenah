@@ -16,6 +16,9 @@ from wenah.api.schemas import (
     RiskAssessmentResponse,
     QuickAssessmentRequest,
     QuickAssessmentResponse,
+    TextAssessmentRequest,
+    TextAssessmentResponse,
+    ExtractedFieldResponse,
     FeatureAssessmentRequest,
     FeatureAssessmentResponse,
     FeatureQuickResponse,
@@ -315,6 +318,116 @@ async def quick_assess(request: QuickAssessmentRequest) -> QuickAssessmentRespon
             total_violations=result["total_violations"],
             requires_detailed_analysis=result["requires_detailed_analysis"],
             feature_scores=feature_scores,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+
+@router.post(
+    "/text",
+    response_model=TextAssessmentResponse,
+    summary="Text-Based Assessment",
+    description="Assess a feature from free-text description with automatic field extraction.",
+    responses={
+        200: {"description": "Text assessment completed"},
+        400: {"model": ErrorResponse, "description": "Invalid request"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+async def assess_text(request: TextAssessmentRequest) -> TextAssessmentResponse:
+    """
+    Assess a feature from a free-text description.
+
+    This endpoint uses AI to extract structured compliance data from natural
+    language descriptions, then runs full compliance analysis. Ideal for:
+    - Quick assessments without detailed technical specs
+    - Initial screening of product ideas
+    - Non-technical stakeholder input
+
+    The system will:
+    1. Extract data fields mentioned in the description
+    2. Identify potential proxy variables for protected classes
+    3. Detect algorithm characteristics and automation level
+    4. Run full compliance analysis with rule engine + LLM
+    """
+    try:
+        from wenah.llm.text_extractor import get_text_extractor
+        import uuid
+
+        dashboard = get_risk_dashboard()
+
+        # Extract structured data from text
+        extractor = get_text_extractor(use_llm=request.include_llm_analysis)
+        extraction = extractor.extract(
+            description=request.description,
+            name=request.name,
+            category=request.category.value,
+        )
+
+        # Convert to ProductFeatureInput
+        feature_id = f"text-{uuid.uuid4().hex[:8]}"
+        feature = extractor.to_product_feature_input(
+            extraction=extraction,
+            feature_id=feature_id,
+            name=request.name,
+            description=request.description,
+            category=request.category.value,
+        )
+
+        # Run full assessment
+        result = dashboard.assess_single_feature(
+            feature=feature,
+            view_type=DashboardViewType.DETAILED,
+        )
+
+        # Build extracted fields response
+        extracted_fields = [
+            ExtractedFieldResponse(
+                name=field.name,
+                description=field.description,
+                used_in_decisions=field.used_in_decisions,
+                potential_proxy=field.potential_proxy,
+            )
+            for field in extraction.data_fields
+        ]
+
+        # Build violations
+        violations = [
+            _build_violation_response(v)
+            for v in result.all_violations
+        ]
+
+        # Build recommendations
+        recommendations = [
+            _build_recommendation_response(r)
+            for r in result.all_recommendations
+        ][:5]
+
+        # Get feature summary
+        if result.feature_summaries:
+            fs = result.feature_summaries[0]
+            risk_score = fs.score
+            risk_level = _convert_risk_level(fs.risk_level)
+        else:
+            risk_score = result.overall_score
+            risk_level = _convert_risk_level(result.overall_risk_level)
+
+        return TextAssessmentResponse(
+            assessment_id=result.assessment_id,
+            feature_name=request.name,
+            timestamp=result.generated_at,
+            extracted_fields=extracted_fields,
+            extraction_confidence=extraction.confidence,
+            risk_score=risk_score,
+            risk_level=risk_level,
+            violations=violations,
+            recommendations=recommendations,
+            executive_summary=result.executive_summary or "Analysis complete.",
+            requires_human_review=result.requires_human_review,
         )
 
     except Exception as e:

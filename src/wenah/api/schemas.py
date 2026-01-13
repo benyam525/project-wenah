@@ -149,6 +149,17 @@ class QuickAssessmentRequest(BaseModel):
     model_config = {"extra": "ignore"}
 
 
+class TextAssessmentRequest(BaseModel):
+    """Request for text-based assessment with automatic field extraction."""
+
+    name: str = Field(..., description="Feature name", min_length=1, max_length=200)
+    category: APIProductCategory = Field(..., description="Product category")
+    description: str = Field(..., description="Free-text feature description", min_length=10, max_length=5000)
+    include_llm_analysis: bool = Field(default=True, description="Include LLM-powered analysis")
+
+    model_config = {"extra": "ignore"}
+
+
 class FeatureAssessmentRequest(BaseModel):
     """Request for single feature assessment."""
 
@@ -315,6 +326,31 @@ class FeatureQuickResponse(BaseModel):
     violations_count: int
     requires_full_analysis: bool
     primary_concerns: list[str]
+
+
+class ExtractedFieldResponse(BaseModel):
+    """Extracted data field in response."""
+
+    name: str
+    description: str
+    used_in_decisions: bool
+    potential_proxy: str | None
+
+
+class TextAssessmentResponse(BaseModel):
+    """Response for text-based assessment."""
+
+    assessment_id: str
+    feature_name: str
+    timestamp: datetime
+    extracted_fields: list[ExtractedFieldResponse]
+    extraction_confidence: float = Field(ge=0, le=1)
+    risk_score: float = Field(ge=0, le=100)
+    risk_level: APIRiskLevel
+    violations: list[ViolationResponse]
+    recommendations: list[RecommendationResponse]
+    executive_summary: str
+    requires_human_review: bool
 
 
 # =============================================================================

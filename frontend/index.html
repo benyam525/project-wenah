@@ -1670,6 +1670,18 @@
                 });
             }
 
+            async textAssessment(name, category, description, includeLLM = true) {
+                return this.request('/api/v1/assess/text', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name,
+                        category,
+                        description,
+                        include_llm_analysis: includeLLM
+                    })
+                });
+            }
+
             // Design Guidance Endpoints
             async getDesignGuidance(productName, features, level = 'standard') {
                 return this.request('/api/v1/guidance/design', {
@@ -2008,23 +2020,29 @@
                 analyzeBtn.disabled = true;
 
                 try {
-                    const feature = {
-                        feature_id: `feature-${Date.now()}`,
-                        name: featureName,
-                        description: description,
-                        category: category,
-                        feature_type: 'automated_decision',
-                        decision_impact: description.substring(0, 100),
-                        affected_population: 'general users',
-                        data_fields: []
-                    };
-
                     let result;
 
                     if (this.isConnected) {
-                        result = await this.api.quickAssessment([feature]);
+                        // Use new text-based assessment endpoint
+                        result = await this.api.textAssessment(featureName, category, description, true);
+                        // Normalize response for display
+                        result = {
+                            overall_score: result.risk_score,
+                            risk_level: result.risk_level,
+                            violations: result.violations || [],
+                            recommendations: result.recommendations || [],
+                            extracted_fields: result.extracted_fields || [],
+                            executive_summary: result.executive_summary,
+                            requires_human_review: result.requires_human_review
+                        };
                     } else {
                         // Demo mode - simulate response
+                        const feature = {
+                            feature_id: `feature-${Date.now()}`,
+                            name: featureName,
+                            description: description,
+                            category: category
+                        };
                         result = this.generateDemoResponse(feature);
                     }
 
