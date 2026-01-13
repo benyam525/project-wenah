@@ -3,6 +3,8 @@ RAG (Retrieval-Augmented Generation) pipeline for compliance analysis.
 
 Combines vector store retrieval with Claude analysis to provide
 grounded, accurate compliance assessments.
+
+Note: Requires optional heavy dependencies (chromadb, sentence-transformers).
 """
 
 from typing import Any
@@ -16,9 +18,28 @@ from wenah.core.types import (
     RAGResponse,
     RuleEvaluation,
 )
-from wenah.data.vector_store import VectorStore, get_vector_store
-from wenah.data.embeddings import EmbeddingGenerator, get_embedding_generator
-from wenah.llm.claude_client import ClaudeClient, get_claude_client, AnalysisType
+
+# Optional heavy dependencies
+try:
+    from wenah.data.vector_store import VectorStore, get_vector_store
+    from wenah.data.embeddings import EmbeddingGenerator, get_embedding_generator
+    VECTOR_DEPS_AVAILABLE = True
+except ImportError:
+    VectorStore = None
+    get_vector_store = None
+    EmbeddingGenerator = None
+    get_embedding_generator = None
+    VECTOR_DEPS_AVAILABLE = False
+
+try:
+    from wenah.llm.claude_client import ClaudeClient, get_claude_client, AnalysisType
+    CLAUDE_AVAILABLE = True
+except ImportError:
+    ClaudeClient = None
+    get_claude_client = None
+    AnalysisType = None
+    CLAUDE_AVAILABLE = False
+
 from wenah.llm.prompts import (
     SYSTEM_PROMPT_STRUCTURED_OUTPUT,
     build_risk_analysis_prompt,
@@ -79,9 +100,9 @@ class RAGPipeline:
 
     def __init__(
         self,
-        vector_store: VectorStore | None = None,
-        embedding_generator: EmbeddingGenerator | None = None,
-        claude_client: ClaudeClient | None = None,
+        vector_store=None,
+        embedding_generator=None,
+        claude_client=None,
     ):
         """
         Initialize the RAG pipeline.
@@ -90,7 +111,21 @@ class RAGPipeline:
             vector_store: Vector store for document retrieval
             embedding_generator: Embedding generator for queries
             claude_client: Claude client for analysis
+
+        Raises:
+            ImportError: If required dependencies are not installed
         """
+        if not VECTOR_DEPS_AVAILABLE:
+            raise ImportError(
+                "RAG pipeline requires chromadb and sentence-transformers. "
+                "Install with: pip install chromadb sentence-transformers"
+            )
+        if not CLAUDE_AVAILABLE:
+            raise ImportError(
+                "RAG pipeline requires anthropic client. "
+                "Install with: pip install anthropic"
+            )
+
         self.vector_store = vector_store or get_vector_store()
         self.embedding_generator = embedding_generator or get_embedding_generator()
         self.claude_client = claude_client or get_claude_client()

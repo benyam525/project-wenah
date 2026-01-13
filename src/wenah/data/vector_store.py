@@ -2,15 +2,23 @@
 Vector store integration using ChromaDB.
 
 Provides storage and retrieval of law document embeddings for RAG pipeline.
+Optional dependency - provides stub implementation if not installed.
 """
 
 from pathlib import Path
 from typing import Any
 
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-
 from wenah.config import settings
+
+# Lazy import for optional heavy dependency
+try:
+    import chromadb
+    from chromadb.config import Settings as ChromaSettings
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    chromadb = None
+    ChromaSettings = None
+    CHROMADB_AVAILABLE = False
 
 
 class VectorStore:
@@ -35,6 +43,12 @@ class VectorStore:
             collection_name: Name of the ChromaDB collection.
                             Defaults to config setting.
         """
+        if not CHROMADB_AVAILABLE:
+            raise ImportError(
+                "chromadb is not installed. "
+                "Install with: pip install chromadb"
+            )
+
         self.persist_directory = Path(
             persist_directory or settings.chroma_persist_directory
         )
@@ -57,6 +71,11 @@ class VectorStore:
             name=self.collection_name,
             metadata={"description": "Civil rights law documents for compliance analysis"},
         )
+
+    @classmethod
+    def is_available(cls) -> bool:
+        """Check if ChromaDB is available."""
+        return CHROMADB_AVAILABLE
 
     @property
     def collection(self) -> chromadb.Collection:

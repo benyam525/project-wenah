@@ -2,13 +2,20 @@
 Embedding generation for law documents.
 
 Uses sentence-transformers to generate embeddings for the RAG pipeline.
+Optional dependency - provides stub implementation if not installed.
 """
 
 from typing import Any
 
-from sentence_transformers import SentenceTransformer
-
 from wenah.config import settings
+
+# Lazy import for optional heavy dependency
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SentenceTransformer = None
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
 
 
 class EmbeddingGenerator:
@@ -31,11 +38,21 @@ class EmbeddingGenerator:
         self._model: SentenceTransformer | None = None
 
     @property
-    def model(self) -> SentenceTransformer:
+    def model(self):
         """Lazy load the model on first access."""
+        if not SENTENCE_TRANSFORMERS_AVAILABLE:
+            raise ImportError(
+                "sentence-transformers is not installed. "
+                "Install with: pip install sentence-transformers"
+            )
         if self._model is None:
             self._model = SentenceTransformer(self.model_name)
         return self._model
+
+    @property
+    def is_available(self) -> bool:
+        """Check if embedding generation is available."""
+        return SENTENCE_TRANSFORMERS_AVAILABLE
 
     def embed_text(self, text: str) -> list[float]:
         """

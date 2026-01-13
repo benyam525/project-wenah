@@ -33,8 +33,17 @@ from wenah.rules.categories.employment import (
     EmploymentCategoryProcessor,
     get_employment_processor,
 )
-from wenah.llm.rag_pipeline import RAGPipeline, get_rag_pipeline, RAGResult
 from wenah.config import settings
+
+# Optional RAG pipeline - requires heavy ML dependencies
+try:
+    from wenah.llm.rag_pipeline import RAGPipeline, get_rag_pipeline, RAGResult
+    RAG_AVAILABLE = True
+except ImportError:
+    RAGPipeline = None
+    get_rag_pipeline = None
+    RAGResult = None
+    RAG_AVAILABLE = False
 
 
 @dataclass
