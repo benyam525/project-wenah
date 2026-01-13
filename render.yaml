@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: wenah-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python start.py
+    envVars:
+      - key: PYTHONPATH
+        value: /opt/render/project/src/src
+      - key: PORT
+        value: 10000
