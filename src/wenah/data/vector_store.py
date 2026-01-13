@@ -78,7 +78,7 @@ class VectorStore:
         return CHROMADB_AVAILABLE
 
     @property
-    def collection(self) -> chromadb.Collection:
+    def collection(self):
         """Get the underlying ChromaDB collection."""
         return self._collection
 
