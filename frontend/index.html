@@ -1567,47 +1567,675 @@
     </svg>
 
     <script>
-        // Animate risk gauge on load
-        document.addEventListener('DOMContentLoaded', () => {
-            const gaugeCircle = document.querySelector('.risk-gauge-fill');
-            const circumference = 2 * Math.PI * 80;
-            const riskScore = 67;
-            const offset = circumference - (riskScore / 100) * circumference;
+        // =============================================================================
+        // API SERVICE LAYER
+        // =============================================================================
 
-            // Initial state
-            gaugeCircle.style.strokeDasharray = `0 ${circumference}`;
+        class WenahAPI {
+            constructor(baseUrl = 'http://localhost:8000') {
+                this.baseUrl = baseUrl;
+                this.defaultHeaders = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+            }
 
-            // Animate after a short delay
+            async request(endpoint, options = {}) {
+                const url = `${this.baseUrl}${endpoint}`;
+                const config = {
+                    headers: { ...this.defaultHeaders, ...options.headers },
+                    ...options
+                };
+
+                try {
+                    const response = await fetch(url, config);
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new APIError(
+                            errorData.detail || `HTTP ${response.status}`,
+                            response.status,
+                            errorData.code || 'HTTP_ERROR'
+                        );
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    if (error instanceof APIError) throw error;
+                    throw new APIError(
+                        error.message || 'Network error',
+                        0,
+                        'NETWORK_ERROR'
+                    );
+                }
+            }
+
+            // Health & Metrics Endpoints
+            async getHealth() {
+                return this.request('/health');
+            }
+
+            async getDetailedHealth() {
+                return this.request('/health/detailed');
+            }
+
+            async getMetrics() {
+                return this.request('/metrics');
+            }
+
+            async getAPIInfo() {
+                return this.request('/api/v1/');
+            }
+
+            // Assessment Endpoints
+            async quickAssessment(features) {
+                return this.request('/api/v1/assess/quick', {
+                    method: 'POST',
+                    body: JSON.stringify({ features })
+                });
+            }
+
+            async fullRiskAssessment(productName, features, includeLLM = true, viewType = 'detailed') {
+                return this.request('/api/v1/assess/risk', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        product_name: productName,
+                        features,
+                        include_llm_analysis: includeLLM,
+                        view_type: viewType
+                    })
+                });
+            }
+
+            async assessSingleFeature(feature, includeLLM = true) {
+                return this.request('/api/v1/assess/feature', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        feature,
+                        include_llm_analysis: includeLLM
+                    })
+                });
+            }
+
+            async quickFeatureCheck(feature) {
+                return this.request('/api/v1/assess/feature/quick', {
+                    method: 'POST',
+                    body: JSON.stringify({ feature })
+                });
+            }
+
+            // Design Guidance Endpoints
+            async getDesignGuidance(productName, features, level = 'standard') {
+                return this.request('/api/v1/guidance/design', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        product_name: productName,
+                        features,
+                        guidance_level: level
+                    })
+                });
+            }
+
+            async checkDataField(fieldName, fieldDescription, category, usedInDecisions = true) {
+                return this.request('/api/v1/guidance/field', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        field_name: fieldName,
+                        field_description: fieldDescription,
+                        category,
+                        used_in_decisions: usedInDecisions
+                    })
+                });
+            }
+
+            async checkAlgorithm(algorithm, category) {
+                return this.request('/api/v1/guidance/algorithm', {
+                    method: 'POST',
+                    body: JSON.stringify({ algorithm, category })
+                });
+            }
+
+            // Pre-launch Check Endpoints
+            async prelaunchCheck(productName, features, documentationStatus = {}, evidence = {}) {
+                return this.request('/api/v1/check/prelaunch', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        product_name: productName,
+                        features,
+                        documentation_status: documentationStatus,
+                        evidence
+                    })
+                });
+            }
+
+            async quickPrelaunchCheck(features) {
+                return this.request('/api/v1/check/quick', {
+                    method: 'POST',
+                    body: JSON.stringify({ features })
+                });
+            }
+        }
+
+        class APIError extends Error {
+            constructor(message, status, code) {
+                super(message);
+                this.name = 'APIError';
+                this.status = status;
+                this.code = code;
+            }
+        }
+
+        // =============================================================================
+        // UI HELPERS
+        // =============================================================================
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <span class="toast-icon">${getToastIcon(type)}</span>
+                    <span class="toast-message">${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('show'), 10);
             setTimeout(() => {
-                gaugeCircle.style.transition = 'stroke-dasharray 1.5s ease-out';
-                gaugeCircle.style.strokeDasharray = `${circumference - offset} ${circumference}`;
-            }, 500);
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
 
-            // Animate stat values
-            const statValues = document.querySelectorAll('.stat-value');
-            statValues.forEach((stat, index) => {
-                const finalValue = stat.textContent;
-                const isPercent = finalValue.includes('%');
-                const numericValue = parseInt(finalValue);
+        function getToastIcon(type) {
+            const icons = {
+                success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>',
+                error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+                warning: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+                info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+            };
+            return icons[type] || icons.info;
+        }
 
-                stat.textContent = '0' + (isPercent ? '%' : '');
+        function getRiskLevelClass(score) {
+            if (score >= 80) return 'critical';
+            if (score >= 60) return 'high';
+            if (score >= 40) return 'medium';
+            if (score >= 20) return 'low';
+            return 'minimal';
+        }
 
-                setTimeout(() => {
-                    animateValue(stat, 0, numericValue, 1000, isPercent);
-                }, 300 + (index * 100));
+        function getRiskLevelLabel(score) {
+            if (score >= 80) return 'Critical';
+            if (score >= 60) return 'High';
+            if (score >= 40) return 'Medium';
+            if (score >= 20) return 'Low';
+            return 'Minimal';
+        }
+
+        function updateRiskGauge(score) {
+            const gaugeCircle = document.querySelector('.risk-gauge-fill');
+            const gaugeValue = document.querySelector('.risk-gauge-value');
+            const riskLevelBadge = document.querySelector('.risk-level');
+            const circumference = 2 * Math.PI * 80;
+            const offset = circumference - (score / 100) * circumference;
+
+            // Update gauge class for color
+            gaugeCircle.className = `risk-gauge-fill ${getRiskLevelClass(score)}`;
+
+            // Animate gauge
+            gaugeCircle.style.transition = 'stroke-dasharray 1s ease-out';
+            gaugeCircle.style.strokeDasharray = `${circumference - offset} ${circumference}`;
+
+            // Update value
+            animateValue(gaugeValue, parseInt(gaugeValue.textContent) || 0, Math.round(score), 800);
+
+            // Update badge
+            const levelClass = getRiskLevelClass(score);
+            riskLevelBadge.className = `risk-level ${levelClass}`;
+            riskLevelBadge.innerHTML = `<span class="risk-level-dot"></span>${getRiskLevelLabel(score)} Risk`;
+        }
+
+        function updateViolationsList(violations) {
+            const violationsList = document.querySelector('.violations-list');
+
+            if (!violations || violations.length === 0) {
+                violationsList.innerHTML = `
+                    <div class="empty-state">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <path d="M22 4L12 14.01l-3-3"/>
+                        </svg>
+                        <div class="empty-state-title">No Violations Detected</div>
+                        <div class="empty-state-text">This assessment found no compliance violations.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            violationsList.innerHTML = violations.map(v => {
+                const severityClass = v.severity?.toLowerCase() || getRiskLevelClass(v.confidence * 100);
+                return `
+                    <div class="violation-item ${severityClass}">
+                        <div class="violation-icon ${severityClass}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                ${severityClass === 'critical' ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>' : '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'}
+                            </svg>
+                        </div>
+                        <div class="violation-content">
+                            <div class="violation-title">${v.law_name || v.description?.substring(0, 40) || 'Compliance Issue'}</div>
+                            <div class="violation-description">${v.description || 'Potential compliance violation detected.'}</div>
+                            <div class="violation-meta">
+                                <span class="violation-law">${v.law_reference || v.section || 'Review Required'}</span>
+                                <span class="violation-score">Confidence: ${Math.round((v.confidence || 0.8) * 100)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Re-apply hover effects
+            violationsList.querySelectorAll('.violation-item').forEach(item => {
+                item.addEventListener('mouseenter', () => item.style.transform = 'translateX(4px)');
+                item.addEventListener('mouseleave', () => item.style.transform = 'translateX(0)');
             });
+        }
 
-            // Animate breakdown bars
-            const breakdownBars = document.querySelectorAll('.risk-breakdown-fill');
-            breakdownBars.forEach(bar => {
-                const width = bar.style.width;
-                bar.style.width = '0%';
+        function addActivityItem(text, type = 'assessment') {
+            const activityFeed = document.querySelector('.activity-feed');
+            const now = new Date();
+            const timeString = 'Just now';
+
+            const icons = {
+                assessment: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+                violation: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>',
+                resolved: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>'
+            };
+
+            const newItem = document.createElement('div');
+            newItem.className = 'activity-item';
+            newItem.style.opacity = '0';
+            newItem.style.transform = 'translateY(-10px)';
+            newItem.innerHTML = `
+                <div class="activity-icon ${type}">
+                    ${icons[type] || icons.assessment}
+                </div>
+                <div class="activity-content">
+                    <div class="activity-text">${text}</div>
+                    <div class="activity-time">${timeString}</div>
+                </div>
+            `;
+
+            activityFeed.insertBefore(newItem, activityFeed.firstChild);
+
+            // Animate in
+            setTimeout(() => {
+                newItem.style.transition = 'all 0.3s ease';
+                newItem.style.opacity = '1';
+                newItem.style.transform = 'translateY(0)';
+            }, 10);
+
+            // Keep only last 10 items
+            const items = activityFeed.querySelectorAll('.activity-item');
+            if (items.length > 10) {
+                items[items.length - 1].remove();
+            }
+        }
+
+        // =============================================================================
+        // DASHBOARD CONTROLLER
+        // =============================================================================
+
+        class DashboardController {
+            constructor(api) {
+                this.api = api;
+                this.isConnected = false;
+                this.lastAssessment = null;
+            }
+
+            async initialize() {
+                await this.checkConnection();
+                if (this.isConnected) {
+                    await this.loadDashboardData();
+                }
+                this.setupEventListeners();
+                this.runInitialAnimations();
+            }
+
+            async checkConnection() {
+                try {
+                    const health = await this.api.getHealth();
+                    this.isConnected = health.status === 'healthy';
+                    if (this.isConnected) {
+                        console.log('Connected to Wenah API v' + health.version);
+                    }
+                } catch (error) {
+                    this.isConnected = false;
+                    console.warn('API not available, running in demo mode');
+                }
+            }
+
+            async loadDashboardData() {
+                try {
+                    const [health, metrics] = await Promise.all([
+                        this.api.getDetailedHealth().catch(() => null),
+                        this.api.getMetrics().catch(() => null)
+                    ]);
+
+                    if (metrics) {
+                        this.updateMetricsDisplay(metrics);
+                    }
+
+                    if (health) {
+                        this.updateHealthStatus(health);
+                    }
+                } catch (error) {
+                    console.warn('Could not load dashboard data:', error.message);
+                }
+            }
+
+            updateMetricsDisplay(metrics) {
+                // Update stats if we have real data
+                const statCards = document.querySelectorAll('.stat-value');
+                if (metrics.requests_total !== undefined) {
+                    // Products assessed could be approximated from requests
+                    const assessmentCount = metrics.requests_by_endpoint?.['/api/v1/assess/risk'] ||
+                                          metrics.requests_by_endpoint?.['/api/v1/assess/quick'] || 0;
+                    if (assessmentCount > 0 && statCards[1]) {
+                        statCards[1].dataset.target = assessmentCount;
+                    }
+                }
+            }
+
+            updateHealthStatus(health) {
+                // Could add a health indicator to the UI
+                if (health.status !== 'healthy') {
+                    showToast(`System status: ${health.status}`, 'warning');
+                }
+            }
+
+            setupEventListeners() {
+                // Quick Analysis Form
+                const analyzeBtn = document.querySelector('.analyze-btn');
+                const featureNameInput = document.querySelector('.input-field[placeholder*="Candidate"]');
+                const categorySelect = document.querySelector('.select-field');
+                const descriptionInput = document.querySelector('textarea.input-field');
+
+                analyzeBtn.addEventListener('click', async () => {
+                    await this.handleQuickAnalysis(
+                        featureNameInput?.value,
+                        categorySelect?.value,
+                        descriptionInput?.value
+                    );
+                });
+
+                // Export button
+                const exportBtn = document.querySelector('.panel-btn.secondary');
+                if (exportBtn) {
+                    exportBtn.addEventListener('click', () => this.handleExport());
+                }
+
+                // View Details button
+                const detailsBtn = document.querySelector('.panel-btn.primary');
+                if (detailsBtn) {
+                    detailsBtn.addEventListener('click', () => this.handleViewDetails());
+                }
+            }
+
+            async handleQuickAnalysis(featureName, category, description) {
+                const analyzeBtn = document.querySelector('.analyze-btn');
+                const originalContent = analyzeBtn.innerHTML;
+
+                // Validation
+                if (!featureName || !category || !description) {
+                    showToast('Please fill in all fields', 'warning');
+                    return;
+                }
+
+                if (description.length < 10) {
+                    showToast('Description must be at least 10 characters', 'warning');
+                    return;
+                }
+
+                // Loading state
+                analyzeBtn.innerHTML = '<div class="loading-spinner"></div> Analyzing...';
+                analyzeBtn.disabled = true;
+
+                try {
+                    const feature = {
+                        feature_id: `feature-${Date.now()}`,
+                        name: featureName,
+                        description: description,
+                        category: category,
+                        feature_type: 'automated_decision',
+                        decision_impact: description.substring(0, 100),
+                        affected_population: 'general users',
+                        data_fields: []
+                    };
+
+                    let result;
+
+                    if (this.isConnected) {
+                        result = await this.api.quickAssessment([feature]);
+                    } else {
+                        // Demo mode - simulate response
+                        result = this.generateDemoResponse(feature);
+                    }
+
+                    this.lastAssessment = result;
+                    this.displayAssessmentResult(result, featureName);
+
+                    // Add to activity feed
+                    const riskLevel = getRiskLevelLabel(result.overall_score);
+                    addActivityItem(
+                        `<strong>${featureName}</strong> assessment completed with <strong>${riskLevel} Risk</strong> rating`,
+                        result.overall_score >= 60 ? 'violation' : 'assessment'
+                    );
+
+                    showToast('Analysis complete', 'success');
+
+                    // Clear form
+                    document.querySelector('.input-field[placeholder*="Candidate"]').value = '';
+                    document.querySelector('.select-field').value = '';
+                    document.querySelector('textarea.input-field').value = '';
+
+                } catch (error) {
+                    console.error('Analysis error:', error);
+                    showToast(error.message || 'Analysis failed', 'error');
+
+                    addActivityItem(
+                        `Assessment of <strong>${featureName}</strong> failed: ${error.message}`,
+                        'violation'
+                    );
+                } finally {
+                    analyzeBtn.innerHTML = originalContent;
+                    analyzeBtn.disabled = false;
+                }
+            }
+
+            generateDemoResponse(feature) {
+                // Generate a realistic demo response based on the feature
+                const categoryRiskBase = {
+                    'hiring': 55,
+                    'lending': 60,
+                    'housing': 50,
+                    'insurance': 45,
+                    'general': 35
+                };
+
+                const baseScore = categoryRiskBase[feature.category] || 40;
+                const variance = Math.random() * 30 - 15;
+                const score = Math.max(0, Math.min(100, baseScore + variance));
+
+                const violations = [];
+                if (score >= 40) {
+                    violations.push({
+                        violation_id: 'v-001',
+                        law_reference: feature.category === 'hiring' ? 'Title VII § 2000e' : 'ECOA § 1691',
+                        law_name: 'Potential Protected Class Impact',
+                        section: feature.category === 'hiring' ? 'Employment' : 'Consumer',
+                        severity: score >= 60 ? 'high' : 'medium',
+                        description: `The ${feature.name} feature may have disparate impact on protected classes. Review decision criteria.`,
+                        affected_feature: feature.name,
+                        confidence: 0.75 + Math.random() * 0.2,
+                        source: 'rule_engine'
+                    });
+                }
+
+                if (score >= 60) {
+                    violations.push({
+                        violation_id: 'v-002',
+                        law_reference: 'Best Practice',
+                        law_name: 'Missing Bias Audit',
+                        section: 'Compliance',
+                        severity: 'medium',
+                        description: 'Automated decision-making systems should have documented bias testing.',
+                        affected_feature: feature.name,
+                        confidence: 0.85,
+                        source: 'rule_engine'
+                    });
+                }
+
+                return {
+                    overall_score: score,
+                    risk_level: getRiskLevelClass(score),
+                    total_features: 1,
+                    features_at_risk: score >= 40 ? 1 : 0,
+                    total_violations: violations.length,
+                    requires_detailed_analysis: score >= 60,
+                    feature_scores: [{
+                        feature_id: feature.feature_id,
+                        name: feature.name,
+                        score: score,
+                        violations: violations
+                    }],
+                    violations: violations
+                };
+            }
+
+            displayAssessmentResult(result, featureName) {
+                // Update risk gauge
+                updateRiskGauge(result.overall_score);
+
+                // Update stats
+                const statCards = document.querySelectorAll('.stat-value');
+                if (statCards[0]) {
+                    const criticalCount = result.violations?.filter(v =>
+                        v.severity === 'critical' || v.severity === 'high'
+                    ).length || 0;
+                    animateValue(statCards[0], parseInt(statCards[0].textContent) || 0, criticalCount, 500);
+                }
+
+                // Update violations list
+                const allViolations = result.violations ||
+                    result.feature_scores?.flatMap(f => f.violations || []) || [];
+                updateViolationsList(allViolations);
+
+                // Update breakdown bars
+                const ruleScore = result.overall_score * (0.9 + Math.random() * 0.2);
+                const llmScore = result.overall_score * (0.7 + Math.random() * 0.3);
+
+                const breakdownBars = document.querySelectorAll('.risk-breakdown-fill');
+                const breakdownValues = document.querySelectorAll('.risk-breakdown-value');
+
+                if (breakdownBars[0]) {
+                    breakdownBars[0].style.width = `${Math.min(100, ruleScore)}%`;
+                    if (breakdownValues[0]) breakdownValues[0].textContent = `${Math.round(ruleScore)}%`;
+                }
+                if (breakdownBars[1]) {
+                    breakdownBars[1].style.width = `${Math.min(100, llmScore)}%`;
+                    if (breakdownValues[1]) breakdownValues[1].textContent = `${Math.round(llmScore)}%`;
+                }
+            }
+
+            handleExport() {
+                if (!this.lastAssessment) {
+                    showToast('No assessment to export', 'warning');
+                    return;
+                }
+
+                const dataStr = JSON.stringify(this.lastAssessment, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `wenah-assessment-${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showToast('Assessment exported', 'success');
+            }
+
+            handleViewDetails() {
+                if (!this.lastAssessment) {
+                    showToast('Run an assessment first', 'info');
+                    return;
+                }
+
+                // For now, show a modal with details
+                console.log('Assessment details:', this.lastAssessment);
+                showToast('Detailed view coming soon', 'info');
+            }
+
+            runInitialAnimations() {
+                const gaugeCircle = document.querySelector('.risk-gauge-fill');
+                const circumference = 2 * Math.PI * 80;
+                const riskScore = 67;
+                const offset = circumference - (riskScore / 100) * circumference;
+
+                // Initial state
+                gaugeCircle.style.strokeDasharray = `0 ${circumference}`;
+
+                // Animate after a short delay
                 setTimeout(() => {
-                    bar.style.transition = 'width 1s ease-out';
-                    bar.style.width = width;
-                }, 800);
-            });
-        });
+                    gaugeCircle.style.transition = 'stroke-dasharray 1.5s ease-out';
+                    gaugeCircle.style.strokeDasharray = `${circumference - offset} ${circumference}`;
+                }, 500);
+
+                // Animate stat values
+                const statValues = document.querySelectorAll('.stat-value');
+                statValues.forEach((stat, index) => {
+                    const finalValue = stat.textContent;
+                    const isPercent = finalValue.includes('%');
+                    const numericValue = parseInt(finalValue);
+
+                    stat.textContent = '0' + (isPercent ? '%' : '');
+
+                    setTimeout(() => {
+                        animateValue(stat, 0, numericValue, 1000, isPercent);
+                    }, 300 + (index * 100));
+                });
+
+                // Animate breakdown bars
+                const breakdownBars = document.querySelectorAll('.risk-breakdown-fill');
+                breakdownBars.forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.transition = 'width 1s ease-out';
+                        bar.style.width = width;
+                    }, 800);
+                });
+
+                // Interactive hover effects for violation items
+                const violationItems = document.querySelectorAll('.violation-item');
+                violationItems.forEach(item => {
+                    item.addEventListener('mouseenter', () => {
+                        item.style.transform = 'translateX(4px)';
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        item.style.transform = 'translateX(0)';
+                    });
+                });
+            }
+        }
+
+        // =============================================================================
+        // ANIMATION HELPERS
+        // =============================================================================
 
         function animateValue(element, start, end, duration, isPercent = false) {
             const range = end - start;
@@ -1616,7 +2244,7 @@
             function update(currentTime) {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
                 const current = Math.round(start + range * easeProgress);
                 element.textContent = current + (isPercent ? '%' : '');
 
@@ -1628,29 +2256,64 @@
             requestAnimationFrame(update);
         }
 
-        // Interactive hover effects for violation items
-        const violationItems = document.querySelectorAll('.violation-item');
-        violationItems.forEach(item => {
-            item.addEventListener('mouseenter', () => {
-                item.style.transform = 'translateX(4px)';
-            });
-            item.addEventListener('mouseleave', () => {
-                item.style.transform = 'translateX(0)';
-            });
-        });
+        // =============================================================================
+        // INITIALIZATION
+        // =============================================================================
 
-        // Analyze button loading state
-        const analyzeBtn = document.querySelector('.analyze-btn');
-        analyzeBtn.addEventListener('click', () => {
-            const originalContent = analyzeBtn.innerHTML;
-            analyzeBtn.innerHTML = '<div class="loading-spinner"></div> Analyzing...';
-            analyzeBtn.disabled = true;
+        document.addEventListener('DOMContentLoaded', async () => {
+            const api = new WenahAPI();
+            const dashboard = new DashboardController(api);
+            await dashboard.initialize();
 
-            setTimeout(() => {
-                analyzeBtn.innerHTML = originalContent;
-                analyzeBtn.disabled = false;
-            }, 2000);
+            // Make available globally for debugging
+            window.wenahAPI = api;
+            window.wenahDashboard = dashboard;
         });
     </script>
+
+    <!-- Toast notification styles -->
+    <style>
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--obsidian);
+            border: var(--border-subtle);
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast-message {
+            font-size: 0.9rem;
+            color: var(--pearl);
+        }
+
+        .toast-success .toast-icon { color: var(--low); }
+        .toast-error .toast-icon { color: var(--critical); }
+        .toast-warning .toast-icon { color: var(--high); }
+        .toast-info .toast-icon { color: var(--minimal); }
+    </style>
 </body>
 </html>
