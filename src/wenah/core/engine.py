@@ -358,7 +358,7 @@ class ComplianceEngine:
                         f"Conduct disparate impact analysis for {proxy_str} correlation",
                     ],
                     escalate_to_llm=True,
-                    llm_context=f"Field '{field_name}' may proxy for {proxy_str}",
+                    llm_context={"field": field_name, "proxy_for": proxy_str},
                 ))
                 eval_id += 1
 
@@ -428,7 +428,7 @@ class ComplianceEngine:
                         "Document disparate impact analysis",
                     ],
                     escalate_to_llm=True,
-                    llm_context="Algorithm lacks documented bias testing",
+                    llm_context={"concern": "Algorithm lacks documented bias testing"},
                 ))
                 eval_id += 1
 
@@ -445,7 +445,7 @@ class ComplianceEngine:
                         "Ensure accommodations available for candidates with disabilities",
                     ],
                     escalate_to_llm=True,
-                    llm_context=finding.get("concern", "High-risk input detected"),
+                    llm_context={"concern": finding.get("concern", "High-risk input detected")},
                 ))
                 eval_id += 1
 
