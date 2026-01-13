@@ -1091,7 +1091,7 @@
                 <div class="nav-label">Main</div>
                 <ul class="nav-list">
                     <li>
-                        <a href="#" class="nav-item active">
+                        <a href="#" class="nav-item active" data-page="dashboard">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                                 <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -1102,18 +1102,18 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="nav-item">
+                        <a href="#" class="nav-item" data-page="assessments">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                                 <path d="M2 17l10 5 10-5"/>
                                 <path d="M2 12l10 5 10-5"/>
                             </svg>
                             Assessments
-                            <span class="nav-badge">3</span>
+                            <span class="nav-badge" id="assessments-badge">0</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="nav-item">
+                        <a href="#" class="nav-item" data-page="products">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                 <path d="M14 2v6h6"/>
@@ -1125,7 +1125,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="nav-item">
+                        <a href="#" class="nav-item" data-page="history">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"/>
                                 <path d="M12 6v6l4 2"/>
@@ -1859,7 +1859,7 @@
             });
         }
 
-        function addActivityItem(text, type = 'assessment') {
+        function addActivityItem(text, type = 'assessment', assessmentId = null) {
             const activityFeed = document.querySelector('.activity-feed');
             const now = new Date();
             const timeString = 'Just now';
@@ -1874,6 +1874,13 @@
             newItem.className = 'activity-item';
             newItem.style.opacity = '0';
             newItem.style.transform = 'translateY(-10px)';
+            if (assessmentId) {
+                newItem.dataset.assessmentId = assessmentId;
+                newItem.onclick = () => {
+                    pageNavigator.navigateTo('assessments');
+                    setTimeout(() => pageNavigator.showAssessmentDetail(assessmentId), 100);
+                };
+            }
             newItem.innerHTML = `
                 <div class="activity-icon ${type}">
                     ${icons[type] || icons.assessment}
@@ -2049,11 +2056,17 @@
                     this.lastAssessment = result;
                     this.displayAssessmentResult(result, featureName);
 
-                    // Add to activity feed
+                    // Save to history
+                    result.name = featureName;
+                    result.category = category;
+                    const historyEntry = assessmentHistory.add(result);
+
+                    // Add to activity feed with click handler
                     const riskLevel = getRiskLevelLabel(result.overall_score);
                     addActivityItem(
                         `<strong>${featureName}</strong> assessment completed with <strong>${riskLevel} Risk</strong> rating`,
-                        result.overall_score >= 60 ? 'violation' : 'assessment'
+                        result.overall_score >= 60 ? 'violation' : 'assessment',
+                        historyEntry.id
                     );
 
                     showToast('Analysis complete', 'success');
@@ -2281,6 +2294,348 @@
         }
 
         // =============================================================================
+        // ASSESSMENT HISTORY MANAGER
+        // =============================================================================
+
+        class AssessmentHistory {
+            constructor() {
+                this.storageKey = 'wenah_assessment_history';
+                this.maxItems = 50;
+            }
+
+            getAll() {
+                try {
+                    const data = localStorage.getItem(this.storageKey);
+                    return data ? JSON.parse(data) : [];
+                } catch (e) {
+                    console.error('Error reading history:', e);
+                    return [];
+                }
+            }
+
+            add(assessment) {
+                const history = this.getAll();
+                const entry = {
+                    id: `assess-${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    name: assessment.feature_name || assessment.name || 'Unnamed Assessment',
+                    score: assessment.overall_score || assessment.risk_score || 0,
+                    riskLevel: assessment.risk_level || 'unknown',
+                    violations: assessment.violations || [],
+                    category: assessment.category || 'general',
+                    data: assessment
+                };
+                history.unshift(entry);
+                if (history.length > this.maxItems) {
+                    history.pop();
+                }
+                localStorage.setItem(this.storageKey, JSON.stringify(history));
+                this.updateBadge();
+                return entry;
+            }
+
+            get(id) {
+                const history = this.getAll();
+                return history.find(h => h.id === id);
+            }
+
+            clear() {
+                localStorage.removeItem(this.storageKey);
+                this.updateBadge();
+            }
+
+            updateBadge() {
+                const badge = document.getElementById('assessments-badge');
+                if (badge) {
+                    const count = this.getAll().length;
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'inline-flex' : 'none';
+                }
+            }
+        }
+
+        const assessmentHistory = new AssessmentHistory();
+
+        // =============================================================================
+        // PAGE NAVIGATION
+        // =============================================================================
+
+        class PageNavigator {
+            constructor() {
+                this.currentPage = 'dashboard';
+                this.mainContent = null;
+                this.originalDashboardHTML = '';
+            }
+
+            init() {
+                this.mainContent = document.querySelector('.main-content');
+                if (this.mainContent) {
+                    this.originalDashboardHTML = this.mainContent.innerHTML;
+                }
+
+                // Setup nav click handlers
+                document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = item.dataset.page;
+                        this.navigateTo(page);
+                    });
+                });
+
+                // Update badge on init
+                assessmentHistory.updateBadge();
+            }
+
+            navigateTo(page) {
+                if (this.currentPage === page) return;
+
+                // Update active nav item
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.page === page) {
+                        item.classList.add('active');
+                    }
+                });
+
+                this.currentPage = page;
+                this.renderPage(page);
+            }
+
+            renderPage(page) {
+                switch(page) {
+                    case 'dashboard':
+                        this.mainContent.innerHTML = this.originalDashboardHTML;
+                        window.wenahDashboard?.bindEventListeners();
+                        window.wenahDashboard?.runInitialAnimations();
+                        break;
+                    case 'assessments':
+                        this.renderAssessmentsPage();
+                        break;
+                    case 'history':
+                        this.renderHistoryPage();
+                        break;
+                    case 'products':
+                        this.renderComingSoonPage('Products', 'Track and manage all your assessed products in one place.');
+                        break;
+                    default:
+                        this.renderComingSoonPage(page.charAt(0).toUpperCase() + page.slice(1), 'This feature is coming soon.');
+                }
+            }
+
+            renderAssessmentsPage() {
+                const history = assessmentHistory.getAll();
+                const assessmentsHTML = history.length === 0
+                    ? `<div class="empty-state">
+                         <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                         </svg>
+                         <div class="empty-state-text">No assessments yet. Run your first analysis from the Dashboard.</div>
+                       </div>`
+                    : history.map(h => `
+                        <div class="assessment-card" data-id="${h.id}" onclick="pageNavigator.showAssessmentDetail('${h.id}')">
+                            <div class="assessment-card-header">
+                                <div class="assessment-name">${h.name}</div>
+                                <div class="risk-badge ${this.getRiskClass(h.score)}">${this.getRiskLabel(h.score)}</div>
+                            </div>
+                            <div class="assessment-card-body">
+                                <div class="assessment-score">
+                                    <span class="score-value">${Math.round(h.score)}</span>
+                                    <span class="score-label">Risk Score</span>
+                                </div>
+                                <div class="assessment-meta">
+                                    <div class="meta-item">
+                                        <span class="meta-label">Violations</span>
+                                        <span class="meta-value">${h.violations?.length || 0}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Category</span>
+                                        <span class="meta-value">${h.category || 'General'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="assessment-card-footer">
+                                <span class="assessment-time">${this.formatTime(h.timestamp)}</span>
+                                <button class="view-btn">View Details</button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                this.mainContent.innerHTML = `
+                    <header class="content-header">
+                        <div class="header-title">
+                            <nav class="breadcrumb">
+                                <span>Home</span>
+                                <span class="breadcrumb-separator">/</span>
+                                <span class="breadcrumb-current">Assessments</span>
+                            </nav>
+                            <h1>Assessment History</h1>
+                        </div>
+                        <div class="header-actions">
+                            ${history.length > 0 ? '<button class="btn-secondary" onclick="if(confirm(\'Clear all history?\')) { assessmentHistory.clear(); pageNavigator.renderAssessmentsPage(); }">Clear History</button>' : ''}
+                            <button class="btn-primary" onclick="pageNavigator.navigateTo('dashboard')">New Assessment</button>
+                        </div>
+                    </header>
+                    <div class="assessments-grid">
+                        ${assessmentsHTML}
+                    </div>
+                `;
+            }
+
+            renderHistoryPage() {
+                const history = assessmentHistory.getAll();
+                const historyHTML = history.length === 0
+                    ? `<div class="empty-state">
+                         <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                           <circle cx="12" cy="12" r="10"/>
+                           <path d="M12 6v6l4 2"/>
+                         </svg>
+                         <div class="empty-state-text">No activity history yet.</div>
+                       </div>`
+                    : `<div class="history-timeline">
+                         ${history.map(h => `
+                           <div class="timeline-item" onclick="pageNavigator.showAssessmentDetail('${h.id}')">
+                               <div class="timeline-marker ${this.getRiskClass(h.score)}"></div>
+                               <div class="timeline-content">
+                                   <div class="timeline-header">
+                                       <strong>${h.name}</strong>
+                                       <span class="risk-badge small ${this.getRiskClass(h.score)}">${Math.round(h.score)}</span>
+                                   </div>
+                                   <div class="timeline-body">
+                                       ${h.violations?.length || 0} violation(s) detected
+                                   </div>
+                                   <div class="timeline-time">${this.formatTime(h.timestamp)}</div>
+                               </div>
+                           </div>
+                         `).join('')}
+                       </div>`;
+
+                this.mainContent.innerHTML = `
+                    <header class="content-header">
+                        <div class="header-title">
+                            <nav class="breadcrumb">
+                                <span>Home</span>
+                                <span class="breadcrumb-separator">/</span>
+                                <span class="breadcrumb-current">History</span>
+                            </nav>
+                            <h1>Activity Timeline</h1>
+                        </div>
+                    </header>
+                    ${historyHTML}
+                `;
+            }
+
+            showAssessmentDetail(id) {
+                const assessment = assessmentHistory.get(id);
+                if (!assessment) {
+                    showToast('Assessment not found', 'error');
+                    return;
+                }
+
+                const violations = assessment.violations || [];
+                const violationsHTML = violations.length === 0
+                    ? '<div class="no-violations">No violations detected</div>'
+                    : violations.map(v => `
+                        <div class="violation-detail">
+                            <div class="violation-header">
+                                <span class="violation-law">${v.law_name || 'Unknown Law'}</span>
+                                <span class="violation-severity ${v.severity || 'medium'}">${v.severity || 'medium'}</span>
+                            </div>
+                            <div class="violation-description">${v.description || 'No description'}</div>
+                            <div class="violation-ref">${v.law_reference || ''}</div>
+                        </div>
+                    `).join('');
+
+                this.mainContent.innerHTML = `
+                    <header class="content-header">
+                        <div class="header-title">
+                            <nav class="breadcrumb">
+                                <span>Home</span>
+                                <span class="breadcrumb-separator">/</span>
+                                <span class="breadcrumb-link" onclick="pageNavigator.navigateTo('assessments')">Assessments</span>
+                                <span class="breadcrumb-separator">/</span>
+                                <span class="breadcrumb-current">${assessment.name}</span>
+                            </nav>
+                            <h1>${assessment.name}</h1>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn-secondary" onclick="pageNavigator.navigateTo('assessments')">Back to List</button>
+                        </div>
+                    </header>
+                    <div class="assessment-detail">
+                        <div class="detail-summary">
+                            <div class="detail-score ${this.getRiskClass(assessment.score)}">
+                                <span class="score-number">${Math.round(assessment.score)}</span>
+                                <span class="score-label">${this.getRiskLabel(assessment.score)} Risk</span>
+                            </div>
+                            <div class="detail-meta">
+                                <div class="meta-row"><span>Category:</span> <strong>${assessment.category || 'General'}</strong></div>
+                                <div class="meta-row"><span>Assessed:</span> <strong>${this.formatTime(assessment.timestamp)}</strong></div>
+                                <div class="meta-row"><span>Violations:</span> <strong>${violations.length}</strong></div>
+                            </div>
+                        </div>
+                        <div class="detail-violations">
+                            <h3>Detected Violations</h3>
+                            ${violationsHTML}
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderComingSoonPage(title, description) {
+                this.mainContent.innerHTML = `
+                    <header class="content-header">
+                        <div class="header-title">
+                            <nav class="breadcrumb">
+                                <span>Home</span>
+                                <span class="breadcrumb-separator">/</span>
+                                <span class="breadcrumb-current">${title}</span>
+                            </nav>
+                            <h1>${title}</h1>
+                        </div>
+                    </header>
+                    <div class="coming-soon">
+                        <svg class="coming-soon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                        <h2>Coming Soon</h2>
+                        <p>${description}</p>
+                        <button class="btn-primary" onclick="pageNavigator.navigateTo('dashboard')">Back to Dashboard</button>
+                    </div>
+                `;
+            }
+
+            getRiskClass(score) {
+                if (score >= 80) return 'critical';
+                if (score >= 60) return 'high';
+                if (score >= 40) return 'medium';
+                if (score >= 20) return 'low';
+                return 'minimal';
+            }
+
+            getRiskLabel(score) {
+                if (score >= 80) return 'Critical';
+                if (score >= 60) return 'High';
+                if (score >= 40) return 'Medium';
+                if (score >= 20) return 'Low';
+                return 'Minimal';
+            }
+
+            formatTime(timestamp) {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diff = now - date;
+
+                if (diff < 60000) return 'Just now';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+                if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
+                return date.toLocaleDateString();
+            }
+        }
+
+        const pageNavigator = new PageNavigator();
+
+        // =============================================================================
         // INITIALIZATION
         // =============================================================================
 
@@ -2289,9 +2644,14 @@
             const dashboard = new DashboardController(api);
             await dashboard.initialize();
 
+            // Initialize page navigator
+            pageNavigator.init();
+
             // Make available globally for debugging
             window.wenahAPI = api;
             window.wenahDashboard = dashboard;
+            window.pageNavigator = pageNavigator;
+            window.assessmentHistory = assessmentHistory;
         });
     </script>
 
@@ -2338,6 +2698,427 @@
         .toast-error .toast-icon { color: var(--critical); }
         .toast-warning .toast-icon { color: var(--high); }
         .toast-info .toast-icon { color: var(--minimal); }
+
+        /* Page Navigation Styles */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-xl);
+            padding-bottom: var(--space-lg);
+            border-bottom: var(--border-subtle);
+        }
+
+        .content-header h1 {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            color: var(--ivory);
+            margin: 0;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--smoke);
+            margin-bottom: 8px;
+        }
+
+        .breadcrumb-separator { color: var(--ash); }
+        .breadcrumb-current { color: var(--gold); }
+        .breadcrumb-link { color: var(--silver); cursor: pointer; }
+        .breadcrumb-link:hover { color: var(--gold); }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold), var(--amber));
+            color: var(--void);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            box-shadow: var(--glow-gold);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--silver);
+            border: 1px solid var(--ash);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* Assessments Grid */
+        .assessments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-lg);
+        }
+
+        .assessment-card {
+            background: var(--charcoal);
+            border: var(--border-subtle);
+            border-radius: 12px;
+            padding: var(--space-lg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .assessment-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .assessment-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-md);
+        }
+
+        .assessment-name {
+            font-weight: 600;
+            color: var(--ivory);
+            font-size: 1.1rem;
+        }
+
+        .assessment-card-body {
+            display: flex;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-md);
+        }
+
+        .assessment-score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .assessment-score .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .assessment-score .score-label {
+            font-size: 0.75rem;
+            color: var(--smoke);
+        }
+
+        .assessment-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .meta-label { color: var(--smoke); font-size: 0.85rem; }
+        .meta-value { color: var(--silver); font-size: 0.85rem; font-weight: 500; }
+
+        .assessment-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--space-md);
+            border-top: var(--border-subtle);
+        }
+
+        .assessment-time {
+            font-size: 0.8rem;
+            color: var(--smoke);
+        }
+
+        .view-btn {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .view-btn:hover {
+            background: var(--gold);
+            color: var(--void);
+        }
+
+        /* Risk Badge */
+        .risk-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .risk-badge.critical { background: rgba(220, 53, 69, 0.2); color: var(--critical); }
+        .risk-badge.high { background: rgba(253, 126, 20, 0.2); color: var(--high); }
+        .risk-badge.medium { background: rgba(255, 193, 7, 0.2); color: var(--medium); }
+        .risk-badge.low { background: rgba(32, 201, 151, 0.2); color: var(--low); }
+        .risk-badge.minimal { background: rgba(102, 178, 255, 0.2); color: var(--minimal); }
+
+        .risk-badge.small {
+            padding: 2px 8px;
+            font-size: 0.7rem;
+        }
+
+        /* History Timeline */
+        .history-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .history-timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--ash);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--charcoal);
+            border: var(--border-subtle);
+            border-radius: 8px;
+            margin-bottom: var(--space-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .timeline-item:hover {
+            border-color: var(--gold);
+            transform: translateX(4px);
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -26px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--ash);
+            border: 2px solid var(--void);
+        }
+
+        .timeline-marker.critical { background: var(--critical); }
+        .timeline-marker.high { background: var(--high); }
+        .timeline-marker.medium { background: var(--medium); }
+        .timeline-marker.low { background: var(--low); }
+        .timeline-marker.minimal { background: var(--minimal); }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .timeline-body {
+            color: var(--smoke);
+            font-size: 0.9rem;
+        }
+
+        .timeline-time {
+            color: var(--ash);
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        /* Assessment Detail */
+        .assessment-detail {
+            display: grid;
+            gap: var(--space-xl);
+        }
+
+        .detail-summary {
+            display: flex;
+            gap: var(--space-xl);
+            padding: var(--space-xl);
+            background: var(--charcoal);
+            border-radius: 12px;
+            border: var(--border-subtle);
+        }
+
+        .detail-score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-lg);
+            border-radius: 8px;
+            min-width: 120px;
+        }
+
+        .detail-score.critical { background: rgba(220, 53, 69, 0.15); }
+        .detail-score.high { background: rgba(253, 126, 20, 0.15); }
+        .detail-score.medium { background: rgba(255, 193, 7, 0.15); }
+        .detail-score.low { background: rgba(32, 201, 151, 0.15); }
+        .detail-score.minimal { background: rgba(102, 178, 255, 0.15); }
+
+        .detail-score .score-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--ivory);
+        }
+
+        .detail-score .score-label {
+            font-size: 0.9rem;
+            color: var(--silver);
+        }
+
+        .detail-meta {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            justify-content: center;
+        }
+
+        .meta-row {
+            color: var(--smoke);
+        }
+
+        .meta-row strong {
+            color: var(--ivory);
+        }
+
+        .detail-violations {
+            padding: var(--space-xl);
+            background: var(--charcoal);
+            border-radius: 12px;
+            border: var(--border-subtle);
+        }
+
+        .detail-violations h3 {
+            color: var(--ivory);
+            margin-bottom: var(--space-lg);
+        }
+
+        .violation-detail {
+            padding: var(--space-md);
+            background: var(--obsidian);
+            border-radius: 8px;
+            margin-bottom: var(--space-md);
+            border-left: 3px solid var(--high);
+        }
+
+        .violation-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .violation-law {
+            font-weight: 600;
+            color: var(--ivory);
+        }
+
+        .violation-severity {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .violation-severity.critical { background: var(--critical); color: white; }
+        .violation-severity.high { background: var(--high); color: white; }
+        .violation-severity.medium { background: var(--medium); color: black; }
+
+        .violation-description {
+            color: var(--silver);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .violation-ref {
+            color: var(--smoke);
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+        }
+
+        .no-violations {
+            text-align: center;
+            padding: var(--space-xl);
+            color: var(--smoke);
+        }
+
+        /* Coming Soon */
+        .coming-soon {
+            text-align: center;
+            padding: var(--space-2xl);
+        }
+
+        .coming-soon-icon {
+            width: 80px;
+            height: 80px;
+            stroke: var(--gold);
+            margin-bottom: var(--space-lg);
+        }
+
+        .coming-soon h2 {
+            color: var(--ivory);
+            margin-bottom: var(--space-md);
+        }
+
+        .coming-soon p {
+            color: var(--smoke);
+            margin-bottom: var(--space-xl);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--space-2xl);
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            stroke: var(--ash);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Activity items clickable */
+        .activity-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .activity-item:hover {
+            background: var(--obsidian);
+            border-radius: 8px;
+            margin: -8px;
+            padding: 8px;
+        }
     </style>
 </body>
 </html>
