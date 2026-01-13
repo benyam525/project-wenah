@@ -12,14 +12,16 @@ RUN pip install --no-cache-dir -r requirements-minimal.txt
 # Copy application code
 COPY src/ ./src/
 COPY data/ ./data/
+COPY start.py ./
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app/src
+    PYTHONPATH=/app/src \
+    PORT=8000
 
 # Expose the API port
 EXPOSE 8000
 
-# Run the application (Railway sets PORT env var)
-CMD ["sh", "-c", "uvicorn wenah.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run the application via Python script (handles PORT env var)
+CMD ["python", "start.py"]
