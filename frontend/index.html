@@ -1572,8 +1572,13 @@
         // =============================================================================
 
         class WenahAPI {
-            constructor(baseUrl = 'http://localhost:8000') {
-                this.baseUrl = baseUrl;
+            constructor(baseUrl = 'https://project-wenah.onrender.com') {
+                // Use localhost for local development, Render URL for production
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    this.baseUrl = 'http://localhost:8000';
+                } else {
+                    this.baseUrl = baseUrl;
+                }
                 this.defaultHeaders = {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
