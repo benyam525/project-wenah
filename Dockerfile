@@ -1,7 +1,10 @@
 # Lightweight Dockerfile for cloud deployment
 # For full ML features, use docker-compose locally with all dependencies
 
-FROM python:3.11-slim
+FROM python:3.11.9-slim
+
+# Cache bust: v2
+ARG CACHEBUST=2
 
 WORKDIR /app
 
