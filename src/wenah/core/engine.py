@@ -142,6 +142,12 @@ class ComplianceEngine:
         if config.include_category_analysis:
             analysis.category_analysis = self._run_category_analysis(feature)
 
+            # Convert category findings to rule evaluations for proper scoring
+            category_evaluations = self._convert_category_findings_to_evaluations(
+                feature, analysis.category_analysis
+            )
+            analysis.rule_evaluations.extend(category_evaluations)
+
         # Step 3: RAG analysis for escalated rules or high-risk items
         if config.include_llm_analysis:
             analysis.rag_result = self._run_rag_analysis(
@@ -309,6 +315,141 @@ class ComplianceEngine:
             "findings": [],
             "recommendations": [],
         }
+
+    def _convert_category_findings_to_evaluations(
+        self,
+        feature: ProductFeatureInput,
+        category_analysis: dict[str, Any] | None,
+    ) -> list[RuleEvaluation]:
+        """
+        Convert category analysis findings into RuleEvaluations for scoring.
+
+        This ensures proxy variables and other findings are properly scored.
+        """
+        if not category_analysis:
+            return []
+
+        evaluations = []
+        eval_id = 0
+
+        # Convert proxy variable concerns to high-severity violations
+        proxy_concerns = category_analysis.get("proxy_variable_concerns", [])
+        for proxy in proxy_concerns:
+            field_name = proxy.get("field", "unknown")
+            proxy_for = proxy.get("proxy_for") or proxy.get("annotated_proxy_for")
+            used_in_decisions = proxy.get("used_in_decisions", False)
+
+            if proxy_for:
+                proxy_list = proxy_for if isinstance(proxy_for, list) else [proxy_for]
+                proxy_str = ", ".join(proxy_list)
+
+                # Higher score if used in decisions
+                risk_score = 75 if used_in_decisions else 55
+
+                evaluations.append(RuleEvaluation(
+                    rule_id=f"proxy-{eval_id}",
+                    rule_name=f"Proxy Variable Detection: {field_name}",
+                    result=RuleResult.VIOLATION if used_in_decisions else RuleResult.POTENTIAL_VIOLATION,
+                    confidence=0.85,
+                    risk_score=risk_score,
+                    law_references=["Title VII", "ECOA"],
+                    recommendations=[
+                        f"Remove '{field_name}' from decision inputs or justify business necessity",
+                        f"Conduct disparate impact analysis for {proxy_str} correlation",
+                    ],
+                    escalate_to_llm=True,
+                    llm_context=f"Field '{field_name}' may proxy for {proxy_str}",
+                ))
+                eval_id += 1
+
+        # Convert protected class exposure to critical violations
+        protected_exposure = category_analysis.get("protected_class_exposure", [])
+        for exposure in protected_exposure:
+            field_name = exposure.get("field", "unknown")
+            protected_class = exposure.get("protected_class", "unknown")
+            used_in_decisions = exposure.get("used_in_decisions", False)
+
+            risk_score = 90 if used_in_decisions else 70
+
+            evaluations.append(RuleEvaluation(
+                rule_id=f"protected-{eval_id}",
+                rule_name=f"Protected Class Data: {protected_class}",
+                result=RuleResult.VIOLATION,
+                confidence=0.95,
+                risk_score=risk_score,
+                law_references=["Title VII", "ADA", "ADEA"],
+                recommendations=[
+                    f"Remove '{field_name}' from all decision-making processes",
+                    "If required for EEO reporting, collect separately post-decision",
+                ],
+                escalate_to_llm=False,
+                llm_context=None,
+            ))
+            eval_id += 1
+
+        # Convert ADA concerns to critical violations
+        ada_concerns = category_analysis.get("ada_concerns", [])
+        for ada in ada_concerns:
+            field_name = ada.get("field", "unknown")
+            concern_type = ada.get("type", "ada_violation")
+
+            evaluations.append(RuleEvaluation(
+                rule_id=f"ada-{eval_id}",
+                rule_name=f"ADA Violation: {concern_type}",
+                result=RuleResult.VIOLATION,
+                confidence=0.90,
+                risk_score=85,
+                law_references=["ADA § 102"],
+                recommendations=[
+                    f"Remove '{field_name}' from pre-offer inquiries",
+                    "Medical inquiries only permitted post-conditional offer",
+                ],
+                escalate_to_llm=False,
+                llm_context=None,
+            ))
+            eval_id += 1
+
+        # Convert algorithm findings to violations
+        findings = category_analysis.get("findings", [])
+        for finding in findings:
+            finding_type = finding.get("type", "unknown")
+            severity = finding.get("severity", "medium")
+
+            if finding_type == "missing_bias_testing":
+                evaluations.append(RuleEvaluation(
+                    rule_id=f"finding-{eval_id}",
+                    rule_name="Missing Bias Testing",
+                    result=RuleResult.VIOLATION,
+                    confidence=0.85,
+                    risk_score=65,
+                    law_references=["Best Practice", "NYC Local Law 144"],
+                    recommendations=[
+                        "Conduct bias/fairness audit on algorithm",
+                        "Document disparate impact analysis",
+                    ],
+                    escalate_to_llm=True,
+                    llm_context="Algorithm lacks documented bias testing",
+                ))
+                eval_id += 1
+
+            elif finding_type == "high_risk_hiring_algorithm":
+                evaluations.append(RuleEvaluation(
+                    rule_id=f"finding-{eval_id}",
+                    rule_name="High-Risk Hiring Algorithm",
+                    result=RuleResult.VIOLATION,
+                    confidence=0.80,
+                    risk_score=70,
+                    law_references=["ADA", "Title VII"],
+                    recommendations=[
+                        "Evaluate algorithm for disability discrimination",
+                        "Ensure accommodations available for candidates with disabilities",
+                    ],
+                    escalate_to_llm=True,
+                    llm_context=finding.get("concern", "High-risk input detected"),
+                ))
+                eval_id += 1
+
+        return evaluations
 
     def _run_rag_analysis(
         self,

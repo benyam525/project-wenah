@@ -416,13 +416,13 @@ class ScoringEngine:
         if overall >= 60:
             reasons.append(f"High risk score ({overall:.0f})")
 
-        # Check for escalated rules
+        # Check for escalated rules (only if risk is at least medium)
         escalated = [e for e in rule_evaluations if e.escalate_to_llm]
-        if escalated:
+        if escalated and overall >= 40:
             reasons.append(f"{len(escalated)} rule(s) require nuanced analysis")
 
-        # Check LLM recommendation
-        if rag_response and rag_response.requires_human_review:
+        # Check LLM recommendation (only for medium+ risk to avoid false alarms)
+        if rag_response and rag_response.requires_human_review and overall >= 40:
             reasons.append("LLM recommends human review")
 
         # Check for conflicting signals
