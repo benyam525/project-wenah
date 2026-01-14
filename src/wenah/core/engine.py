@@ -302,19 +302,30 @@ class ComplianceEngine:
         self,
         feature: ProductFeatureInput,
     ) -> dict[str, Any] | None:
-        """Run category-specific analysis."""
+        """Run category-specific analysis.
+
+        Uses the employment processor for all categories since proxy variable
+        detection is universal across civil rights laws (Title VII, ECOA, FHA).
+        """
         category = feature.category.value
 
-        if category == "hiring":
-            return self.employment_processor.analyze_feature(feature)
+        # Use employment processor for all categories - proxy detection is universal
+        # Title VII (employment), ECOA (lending), FHA (housing) all prohibit
+        # discrimination based on the same protected classes
+        analysis = self.employment_processor.analyze_feature(feature)
 
-        # Other categories return stub analysis for now
-        return {
-            "status": "basic_analysis",
-            "category": category,
-            "findings": [],
-            "recommendations": [],
-        }
+        # Add category-specific law references
+        if category == "lending":
+            analysis["applicable_laws"] = ["ECOA", "FCRA", "Reg B"]
+        elif category == "housing":
+            analysis["applicable_laws"] = ["FHA", "ECOA"]
+        elif category == "insurance":
+            analysis["applicable_laws"] = ["State Insurance Regulations", "FCRA"]
+        else:
+            analysis["applicable_laws"] = ["Title VII", "ADA", "ADEA"]
+
+        analysis["category"] = category
+        return analysis
 
     def _convert_category_findings_to_evaluations(
         self,
@@ -331,6 +342,9 @@ class ComplianceEngine:
 
         evaluations = []
         eval_id = 0
+
+        # Get category-appropriate law references
+        applicable_laws = category_analysis.get("applicable_laws", ["Title VII", "ECOA"])
 
         # Convert proxy variable concerns to high-severity violations
         proxy_concerns = category_analysis.get("proxy_variable_concerns", [])
@@ -352,7 +366,7 @@ class ComplianceEngine:
                     result=RuleResult.VIOLATION if used_in_decisions else RuleResult.POTENTIAL_VIOLATION,
                     confidence=0.85,
                     risk_score=risk_score,
-                    law_references=["Title VII", "ECOA"],
+                    law_references=applicable_laws,
                     recommendations=[
                         f"Remove '{field_name}' from decision inputs or justify business necessity",
                         f"Conduct disparate impact analysis for {proxy_str} correlation",
@@ -377,10 +391,10 @@ class ComplianceEngine:
                 result=RuleResult.VIOLATION,
                 confidence=0.95,
                 risk_score=risk_score,
-                law_references=["Title VII", "ADA", "ADEA"],
+                law_references=applicable_laws,
                 recommendations=[
                     f"Remove '{field_name}' from all decision-making processes",
-                    "If required for EEO reporting, collect separately post-decision",
+                    "If required for reporting, collect separately post-decision",
                 ],
                 escalate_to_llm=False,
                 llm_context=None,
