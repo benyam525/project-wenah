@@ -103,9 +103,7 @@ class AlgorithmSpec(BaseModel):
     type: str = Field(..., description="Type: ml_model, rule_based, heuristic, llm")
     inputs: list[str] = Field(default_factory=list, description="Input features")
     outputs: list[str] = Field(default_factory=list, description="Output predictions")
-    description: str | None = Field(
-        default=None, description="Description of the algorithm"
-    )
+    description: str | None = Field(default=None, description="Description of the algorithm")
     training_data_description: str | None = Field(
         default=None, description="Description of training data used"
     )
