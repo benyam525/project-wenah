@@ -7,6 +7,7 @@ information from product feature descriptions.
 
 import json
 import re
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -109,7 +110,7 @@ class TextExtractor:
     Uses a combination of keyword matching and Claude API for intelligent extraction.
     """
 
-    def __init__(self, use_llm: bool = True):
+    def __init__(self, use_llm: bool = True) -> None:
         """
         Initialize the text extractor.
 
@@ -117,9 +118,9 @@ class TextExtractor:
             use_llm: Whether to use Claude for extraction. If False, uses keyword matching only.
         """
         self.use_llm = use_llm
-        self._client = None
+        self._client: Any = None
 
-    def _get_client(self):
+    def _get_client(self) -> Any:
         """Lazy-load the Claude client."""
         if self._client is None and self.use_llm:
             try:
@@ -415,7 +416,6 @@ Return ONLY the JSON object, no other text."""
                 inputs=[f.name for f in extraction.data_fields],
                 outputs=["decision", "score"],
                 bias_testing_done=extraction.algorithm.bias_testing_mentioned,
-                description=f"Algorithm for {name}",
             )
 
         # Determine feature type

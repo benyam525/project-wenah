@@ -8,7 +8,7 @@ decision tree rules, and case precedents.
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from wenah.config import settings
 from wenah.core.types import LawCategory, LawDocument

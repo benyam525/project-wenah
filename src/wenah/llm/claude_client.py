@@ -114,8 +114,15 @@ class ClaudeClient:
         # Track usage
         self._total_tokens_used += response.usage.input_tokens + response.usage.output_tokens
 
+        # Extract text from first text block in response
+        content_text = ""
+        for block in response.content:
+            if hasattr(block, "text"):
+                content_text = block.text
+                break
+
         return ClaudeResponse(
-            content=response.content[0].text,
+            content=content_text,
             model=response.model,
             usage={
                 "input_tokens": response.usage.input_tokens,
@@ -304,15 +311,15 @@ Respond ONLY with the JSON object, no additional text or markdown formatting."""
 
         return type_prompts.get(analysis_type, base_prompt)
 
-    def _call_with_retry(self, **kwargs) -> anthropic.types.Message:
+    def _call_with_retry(self, **kwargs: Any) -> anthropic.types.Message:
         """Call the API with retry logic."""
         import time
 
-        last_error = None
+        last_error: Exception | None = None
 
         for attempt in range(self.max_retries):
             try:
-                return self._client.messages.create(**kwargs)
+                return self._client.messages.create(**kwargs)  # type: ignore[no-any-return]
             except anthropic.RateLimitError as e:
                 last_error = e
                 wait_time = 2**attempt  # Exponential backoff

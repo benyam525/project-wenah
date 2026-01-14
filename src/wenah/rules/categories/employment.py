@@ -110,7 +110,7 @@ class EmploymentCategoryProcessor:
     employment-specific civil rights concerns.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the employment processor."""
         self.protected_class_fields = PROTECTED_CLASS_FIELDS
         self.proxy_indicators = PROXY_INDICATORS
@@ -129,7 +129,7 @@ class EmploymentCategoryProcessor:
         Returns:
             Analysis results with findings and recommendations
         """
-        analysis = {
+        analysis: dict[str, Any] = {
             "feature_id": feature.feature_id,
             "category": "employment",
             "findings": [],
@@ -256,8 +256,8 @@ class EmploymentCategoryProcessor:
         feature: ProductFeatureInput,
     ) -> dict[str, Any]:
         """Analyze algorithm for compliance concerns."""
-        findings = []
-        risk_factors = []
+        findings: list[dict[str, Any]] = []
+        risk_factors: list[str] = []
 
         algo = feature.algorithm
         if not algo:

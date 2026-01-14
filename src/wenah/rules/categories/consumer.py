@@ -48,7 +48,7 @@ class ConsumerCategoryProcessor:
     - Required disclosures analysis
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the consumer processor."""
         self.protected_classes = ECOA_PROTECTED_CLASSES
         self.proxy_indicators = CONSUMER_PROXY_INDICATORS

@@ -43,7 +43,7 @@ class HousingCategoryProcessor:
     - Reasonable accommodation analysis
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the housing processor."""
         self.protected_classes = FHA_PROTECTED_CLASSES
         self.proxy_indicators = HOUSING_PROXY_INDICATORS

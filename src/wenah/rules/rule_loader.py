@@ -7,7 +7,7 @@ Handles loading, validation, and management of compliance rules from YAML files.
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from wenah.config import settings
 

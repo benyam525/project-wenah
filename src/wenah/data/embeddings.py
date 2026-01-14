@@ -15,7 +15,7 @@ try:
 
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
-    SentenceTransformer = None
+    SentenceTransformer = None  # type: ignore[misc, assignment]
     SENTENCE_TRANSFORMERS_AVAILABLE = False
 
 
@@ -39,7 +39,7 @@ class EmbeddingGenerator:
         self._model: SentenceTransformer | None = None
 
     @property
-    def model(self):
+    def model(self) -> Any:
         """Lazy load the model on first access."""
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
             raise ImportError(
@@ -66,7 +66,7 @@ class EmbeddingGenerator:
             Embedding vector as list of floats
         """
         embedding = self.model.encode(text, convert_to_numpy=True)
-        return embedding.tolist()
+        return list(embedding.tolist())
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
         """
@@ -79,7 +79,7 @@ class EmbeddingGenerator:
             List of embedding vectors
         """
         embeddings = self.model.encode(texts, convert_to_numpy=True)
-        return embeddings.tolist()
+        return [list(e) for e in embeddings.tolist()]
 
     def embed_documents(
         self,
@@ -107,7 +107,7 @@ class EmbeddingGenerator:
     @property
     def embedding_dimension(self) -> int:
         """Get the dimension of embeddings produced by this model."""
-        return self.model.get_sentence_embedding_dimension()
+        return int(self.model.get_sentence_embedding_dimension())
 
 
 class LawDocumentChunker:

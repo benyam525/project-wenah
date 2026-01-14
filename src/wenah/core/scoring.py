@@ -193,8 +193,8 @@ class ScoringEngine:
         if critical_violations:
             # Critical violation takes precedence
             max_eval = max(critical_violations, key=lambda e: e.risk_score)
-            raw_score = max_eval.risk_score
-            confidence = max_eval.confidence
+            raw_score = float(max_eval.risk_score)
+            confidence = float(max_eval.confidence)
             explanation = f"Critical violation: {max_eval.rule_name}"
         elif violations:
             # Multiple violations - use weighted average
