@@ -484,15 +484,17 @@ class TestScoringEngine:
         scoring_engine,
         sample_potential_violation_evaluation,
     ):
-        """Test human review for escalated rules."""
+        """Test human review for escalated rules (requires medium+ risk score)."""
+        # Score must produce overall >= 40 after weighting
+        # With confidence=0.9, weight=1.0: overall = 50 * 0.9 * 1.0 / 1.0 = 45
         scores = [
             ComponentScore(
                 source=ScoreSource.RULE_ENGINE.value,
-                raw_score=30.0,
-                confidence=0.8,
-                weight=0.6,
-                weighted_score=14.4,
-                explanation="Moderate",
+                raw_score=50.0,
+                confidence=0.9,
+                weight=1.0,
+                weighted_score=45.0,
+                explanation="Medium risk",
             ),
         ]
 
