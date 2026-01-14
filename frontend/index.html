@@ -1325,19 +1325,429 @@
             }
 
             .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .sidebar-overlay {
                 display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+
+            .mobile-header {
+                display: flex !important;
             }
 
             .stats-grid {
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Tablet */
+        @media (max-width: 768px) {
+            .header {
+                padding: var(--space-sm) var(--space-md);
+                flex-wrap: wrap;
+                gap: var(--space-sm);
+            }
+
+            .header-title h1 {
+                font-size: 1.25rem;
+            }
+
+            .breadcrumb {
+                font-size: 0.7rem;
+            }
+
+            .main-content {
+                padding: var(--space-md);
+            }
+
+            .dashboard-grid {
+                gap: var(--space-md);
+            }
+
+            .panel {
+                padding: var(--space-md);
+            }
+
+            .panel-title {
+                font-size: 0.85rem;
+            }
+
+            .risk-gauge {
+                width: 120px;
+                height: 120px;
+            }
+
+            .risk-value {
+                font-size: 2rem;
+            }
+
+            .risk-info {
+                gap: var(--space-sm);
+            }
+
+            .executive-summary {
+                padding: var(--space-sm);
+            }
+
+            .executive-summary-text {
+                font-size: 0.85rem;
+            }
+
+            .fields-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .field-card {
+                padding: var(--space-sm);
+            }
+
+            .violation-item {
+                padding: var(--space-sm);
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-sm);
+            }
+
+            .violation-icon {
+                width: 28px;
+                height: 28px;
+            }
+
+            .violation-title {
+                font-size: 0.85rem;
+            }
+
+            .violation-description {
+                font-size: 0.8rem;
+            }
+
+            .recommendation-item {
+                padding: var(--space-sm);
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-xs);
+            }
+
+            .quick-analysis-panel {
+                padding: var(--space-md);
+            }
+
+            .analysis-form textarea {
+                min-height: 100px;
+                font-size: 16px; /* Prevents iOS zoom */
+            }
+
+            .analysis-form select,
+            .analysis-form input {
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: var(--space-sm);
+            }
+
+            .btn {
+                padding: var(--space-sm) var(--space-md);
+                font-size: 0.85rem;
+                width: 100%;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 480px) {
+            :root {
+                --space-xs: 4px;
+                --space-sm: 8px;
+                --space-md: 12px;
+                --space-lg: 16px;
+                --space-xl: 24px;
+            }
+
+            .header {
+                padding: var(--space-sm);
+            }
+
+            .header-title h1 {
+                font-size: 1.1rem;
+            }
+
+            .header-actions {
+                display: none;
+            }
+
+            .main-content {
+                padding: var(--space-sm);
+            }
+
+            .stats-grid {
+                gap: var(--space-sm);
+            }
+
+            .stat-card {
+                padding: var(--space-sm);
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            .panel {
+                padding: var(--space-sm);
+                border-radius: var(--radius-md);
+            }
+
+            .current-assessment {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: var(--space-md);
+            }
+
+            .risk-gauge {
+                width: 100px;
+                height: 100px;
+            }
+
+            .risk-value {
+                font-size: 1.75rem;
+            }
+
+            .risk-label {
+                font-size: 0.6rem;
+            }
+
+            .risk-info {
+                align-items: center;
+            }
+
+            .risk-level-badge {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+
+            .confidence-badge {
+                font-size: 0.65rem;
+            }
+
+            .human-review-alert {
+                font-size: 0.75rem;
+                padding: var(--space-xs) var(--space-sm);
+            }
+
+            .executive-summary {
+                padding: var(--space-sm);
+                margin-bottom: var(--space-md);
+            }
+
+            .executive-summary-title {
+                font-size: 0.75rem;
+            }
+
+            .executive-summary-text {
+                font-size: 0.8rem;
+                line-height: 1.5;
+            }
+
+            .section-header {
+                font-size: 0.75rem;
+            }
+
+            .field-card {
+                padding: var(--space-xs) var(--space-sm);
+            }
+
+            .field-name {
+                font-size: 0.75rem;
+            }
+
+            .field-badge {
+                font-size: 0.6rem;
+                padding: 2px 4px;
+            }
+
+            .concern-item {
+                font-size: 0.8rem;
+                padding: var(--space-xs) 0;
+            }
+
+            .violations-list {
+                gap: var(--space-sm);
+            }
+
+            .violation-item {
+                border-radius: var(--radius-md);
+            }
+
+            .violation-meta {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+
+            .law-tag, .confidence-tag {
+                font-size: 0.6rem;
+                padding: 2px 6px;
+            }
+
+            .recommendations-section {
+                margin-top: var(--space-md);
+            }
+
+            .rec-priority {
+                font-size: 0.65rem;
+                padding: 3px 6px;
+            }
+
+            .rec-text {
+                font-size: 0.75rem;
+            }
+
+            .rec-effort {
+                font-size: 0.65rem;
+            }
+
+            .quick-analysis-panel {
+                padding: var(--space-sm);
+            }
+
+            .quick-analysis-panel h3 {
+                font-size: 0.9rem;
+            }
+
+            .form-group label {
+                font-size: 0.75rem;
+            }
+
+            .analysis-form textarea {
+                min-height: 80px;
+                font-size: 16px;
+            }
+
+            .char-count {
+                font-size: 0.65rem;
+            }
+
+            .activity-item {
+                padding: var(--space-xs) 0;
+            }
+
+            .activity-text {
+                font-size: 0.75rem;
+            }
+
+            .activity-time {
+                font-size: 0.65rem;
+            }
+        }
+
+        /* Mobile Header - Hidden by default */
+        .mobile-header {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--obsidian);
+            border-bottom: 1px solid var(--slate);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .mobile-menu-btn {
+            background: none;
+            border: none;
+            color: var(--pearl);
+            padding: var(--space-sm);
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: background 0.2s;
+        }
+
+        .mobile-menu-btn:hover {
+            background: var(--slate);
+        }
+
+        .mobile-menu-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .mobile-logo {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        /* Touch-friendly improvements */
+        @media (pointer: coarse) {
+            .btn, button {
+                min-height: 44px;
+            }
+
+            .nav-item {
+                min-height: 44px;
+            }
+
+            .violation-item,
+            .recommendation-item,
+            .field-card {
+                min-height: 44px;
+            }
+
+            select, input, textarea {
+                min-height: 44px;
+            }
+        }
+
+        /* Safe area for notched phones */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            .main-content {
+                padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+            }
+
+            .sidebar {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12h18M3 6h18M3 18h18"/>
+            </svg>
+        </button>
+        <span class="mobile-logo">Wenah</span>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="logo-section">
                 <div class="logo">
                     <div class="logo-icon">
@@ -3217,6 +3627,40 @@
 
             // Initialize page navigator
             pageNavigator.init();
+
+            // Mobile menu functionality
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            function openMobileMenu() {
+                sidebar.classList.add('open');
+                sidebarOverlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeMobileMenu() {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', openMobileMenu);
+            }
+
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', closeMobileMenu);
+            }
+
+            // Close menu when nav item clicked on mobile
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    if (window.innerWidth <= 900) {
+                        closeMobileMenu();
+                    }
+                });
+            });
 
             // Make available globally for debugging
             window.wenahAPI = api;
