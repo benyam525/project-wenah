@@ -3340,14 +3340,11 @@
             }
 
             setupEventListeners() {
-                // Checkbox toggle behavior
-                document.querySelectorAll('.checkbox-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        if (e.target.tagName !== 'INPUT') {
-                            const checkbox = item.querySelector('input[type="checkbox"]');
-                            checkbox.checked = !checkbox.checked;
-                        }
-                        item.classList.toggle('checked', item.querySelector('input').checked);
+                // Checkbox toggle behavior - use change event on the actual checkbox
+                document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        const item = checkbox.closest('.checkbox-item');
+                        item.classList.toggle('checked', checkbox.checked);
                     });
                 });
 
