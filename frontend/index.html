@@ -3421,25 +3421,36 @@
             buildDescription(formData) {
                 const parts = [];
 
-                // Add data fields
-                if (formData.selectedFields.length > 0) {
-                    const fieldNames = formData.selectedFields.map(f => f.replace(/_/g, ' ')).join(', ');
-                    parts.push(`System uses the following data: ${fieldNames}.`);
+                // Separate protected classes from proxy variables
+                const protectedClasses = ['race', 'gender', 'age', 'religion', 'disability', 'national_origin'];
+                const selectedProtected = formData.selectedFields.filter(f => protectedClasses.includes(f));
+                const selectedProxy = formData.selectedFields.filter(f => !protectedClasses.includes(f));
+
+                // Explicitly flag protected class data collection (CRITICAL)
+                if (selectedProtected.length > 0) {
+                    const protectedNames = selectedProtected.map(f => f.replace(/_/g, ' ')).join(', ');
+                    parts.push(`CRITICAL: System directly collects protected class data including ${protectedNames}. This data is used in decision-making.`);
                 }
 
-                // Add decision type
+                // Flag proxy variables (HIGH risk)
+                if (selectedProxy.length > 0) {
+                    const proxyNames = selectedProxy.map(f => f.replace(/_/g, ' ')).join(', ');
+                    parts.push(`System also uses proxy variables: ${proxyNames}. These may correlate with protected classes.`);
+                }
+
+                // Add decision type with emphasis on automation risk
                 const decisionDescriptions = {
-                    'automated': 'Decisions are made automatically without human review.',
-                    'human_review_rejections': 'Human reviews rejection decisions only.',
-                    'human_review_all': 'All decisions are reviewed by humans.'
+                    'automated': 'CRITICAL: All decisions are fully automated with NO human review of any decisions.',
+                    'human_review_rejections': 'Human reviews rejection decisions only. Approvals are automated.',
+                    'human_review_all': 'All decisions are reviewed by humans before finalization.'
                 };
                 parts.push(decisionDescriptions[formData.decisionType] || '');
 
-                // Add appeals status
+                // Add appeals status with emphasis if none
                 if (!formData.hasAppeals) {
-                    parts.push('Users cannot appeal decisions.');
+                    parts.push('WARNING: No appeals process exists. Users cannot challenge adverse decisions.');
                 } else {
-                    parts.push('Users can appeal decisions.');
+                    parts.push('Users can appeal decisions through established process.');
                 }
 
                 // Add additional context
