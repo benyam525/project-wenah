@@ -1304,6 +1304,269 @@
             margin: 0 auto;
         }
 
+        /* Hybrid Form Styles */
+        .form-disclaimer {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-sm) var(--space-md);
+            margin-bottom: var(--space-md);
+            font-size: 0.75rem;
+            color: var(--smoke);
+            line-height: 1.4;
+        }
+
+        .form-disclaimer svg {
+            width: 16px;
+            height: 16px;
+            color: var(--gold);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .data-fields-section {
+            margin: var(--space-md) 0;
+        }
+
+        .data-fields-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--pearl);
+            margin-bottom: var(--space-sm);
+        }
+
+        .data-fields-sublabel {
+            font-size: 0.7rem;
+            color: var(--smoke);
+            margin-bottom: var(--space-sm);
+        }
+
+        .data-category {
+            margin-bottom: var(--space-md);
+        }
+
+        .data-category-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--silver);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--space-xs);
+            padding-bottom: var(--space-xs);
+            border-bottom: 1px solid var(--slate);
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-xs);
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 6px 8px;
+            background: var(--charcoal);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .checkbox-item:hover {
+            background: var(--slate);
+        }
+
+        .checkbox-item.checked {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--gold);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkbox-box {
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid var(--smoke);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+
+        .checkbox-item.checked .checkbox-box {
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .checkbox-box svg {
+            width: 10px;
+            height: 10px;
+            color: var(--obsidian);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .checkbox-item.checked .checkbox-box svg {
+            opacity: 1;
+        }
+
+        .checkbox-label {
+            font-size: 0.75rem;
+            color: var(--smoke);
+            transition: color 0.15s ease;
+        }
+
+        .checkbox-item.checked .checkbox-label {
+            color: var(--pearl);
+        }
+
+        .checkbox-item.high-risk .checkbox-label {
+            color: var(--high);
+        }
+
+        .checkbox-item.high-risk.checked {
+            background: rgba(229, 138, 77, 0.15);
+            border-color: var(--high);
+        }
+
+        .checkbox-item.high-risk.checked .checkbox-box {
+            background: var(--high);
+            border-color: var(--high);
+        }
+
+        .radio-group {
+            margin: var(--space-md) 0;
+        }
+
+        .radio-group-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--pearl);
+            margin-bottom: var(--space-sm);
+        }
+
+        .radio-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: 8px 10px;
+            background: var(--charcoal);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .radio-item:hover {
+            background: var(--slate);
+        }
+
+        .radio-item.selected {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--gold);
+        }
+
+        .radio-item input[type="radio"] {
+            display: none;
+        }
+
+        .radio-circle {
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid var(--smoke);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+
+        .radio-item.selected .radio-circle {
+            border-color: var(--gold);
+        }
+
+        .radio-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--gold);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .radio-item.selected .radio-dot {
+            opacity: 1;
+        }
+
+        .radio-label {
+            font-size: 0.8rem;
+            color: var(--smoke);
+        }
+
+        .radio-item.selected .radio-label {
+            color: var(--pearl);
+        }
+
+        .appeals-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-sm) var(--space-md);
+            background: var(--charcoal);
+            border-radius: var(--radius-md);
+            margin: var(--space-md) 0;
+        }
+
+        .appeals-label {
+            font-size: 0.8rem;
+            color: var(--smoke);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: var(--slate);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--gold);
+        }
+
+        .toggle-knob {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--pearl);
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(16px);
+        }
+
         /* Responsive */
         @media (max-width: 1400px) {
             .dashboard-grid {
@@ -1657,6 +1920,49 @@
 
             .activity-time {
                 font-size: 0.65rem;
+            }
+
+            /* Hybrid form mobile */
+            .form-disclaimer {
+                font-size: 0.7rem;
+                padding: var(--space-xs) var(--space-sm);
+            }
+
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .checkbox-item {
+                padding: 8px 10px;
+            }
+
+            .checkbox-label {
+                font-size: 0.8rem;
+            }
+
+            .radio-item {
+                padding: 10px 12px;
+            }
+
+            .radio-label {
+                font-size: 0.8rem;
+            }
+
+            .data-category-title {
+                font-size: 0.65rem;
+            }
+
+            .data-fields-label,
+            .radio-group-label {
+                font-size: 0.75rem;
+            }
+
+            .appeals-toggle {
+                padding: var(--space-sm);
+            }
+
+            .appeals-label {
+                font-size: 0.75rem;
             }
         }
 
@@ -2205,17 +2511,26 @@
                                     <path d="M2 17l10 5 10-5"/>
                                     <path d="M2 12l10 5 10-5"/>
                                 </svg>
-                                Quick Analysis
+                                Compliance Assessment
                             </h2>
                         </div>
                         <div class="feature-input-section">
+                            <!-- Disclaimer -->
+                            <div class="form-disclaimer">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                </svg>
+                                <span>Assessment accuracy depends on complete disclosure. Select all data fields your system uses.</span>
+                            </div>
+
+                            <!-- Basic Info -->
                             <div class="input-group">
                                 <label class="input-label">Feature Name</label>
-                                <input type="text" class="input-field" placeholder="e.g., Candidate Scoring System">
+                                <input type="text" class="input-field" id="featureName" placeholder="e.g., Candidate Scoring System">
                             </div>
                             <div class="input-group">
                                 <label class="input-label">Category</label>
-                                <select class="input-field select-field">
+                                <select class="input-field select-field" id="featureCategory">
                                     <option value="">Select category...</option>
                                     <option value="hiring">Employment / Hiring</option>
                                     <option value="lending">Consumer / Lending</option>
@@ -2223,10 +2538,132 @@
                                     <option value="insurance">Insurance</option>
                                 </select>
                             </div>
-                            <div class="input-group">
-                                <label class="input-label">Description</label>
-                                <textarea class="input-field" placeholder="Describe the feature and its decision impact..."></textarea>
+
+                            <!-- Data Fields Selection -->
+                            <div class="data-fields-section">
+                                <div class="data-fields-label">What data does this feature use?</div>
+
+                                <!-- Protected Classes -->
+                                <div class="data-category">
+                                    <div class="data-category-title">Protected Classes (High Risk)</div>
+                                    <div class="checkbox-grid" id="protectedClassFields">
+                                        <label class="checkbox-item high-risk" data-field="race">
+                                            <input type="checkbox" name="dataField" value="race">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Race/Ethnicity</span>
+                                        </label>
+                                        <label class="checkbox-item high-risk" data-field="gender">
+                                            <input type="checkbox" name="dataField" value="gender">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Sex/Gender</span>
+                                        </label>
+                                        <label class="checkbox-item high-risk" data-field="age">
+                                            <input type="checkbox" name="dataField" value="age">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Age/DOB</span>
+                                        </label>
+                                        <label class="checkbox-item high-risk" data-field="religion">
+                                            <input type="checkbox" name="dataField" value="religion">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Religion</span>
+                                        </label>
+                                        <label class="checkbox-item high-risk" data-field="disability">
+                                            <input type="checkbox" name="dataField" value="disability">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Disability</span>
+                                        </label>
+                                        <label class="checkbox-item high-risk" data-field="national_origin">
+                                            <input type="checkbox" name="dataField" value="national_origin">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">National Origin</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Proxy Variables -->
+                                <div class="data-category">
+                                    <div class="data-category-title">Proxy Variables</div>
+                                    <div class="checkbox-grid" id="proxyFields">
+                                        <label class="checkbox-item" data-field="zip_code">
+                                            <input type="checkbox" name="dataField" value="zip_code">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Zip Code</span>
+                                        </label>
+                                        <label class="checkbox-item" data-field="name">
+                                            <input type="checkbox" name="dataField" value="name">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Name</span>
+                                        </label>
+                                        <label class="checkbox-item" data-field="credit_score">
+                                            <input type="checkbox" name="dataField" value="credit_score">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Credit Score</span>
+                                        </label>
+                                        <label class="checkbox-item" data-field="criminal_history">
+                                            <input type="checkbox" name="dataField" value="criminal_history">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Criminal History</span>
+                                        </label>
+                                        <label class="checkbox-item" data-field="photo">
+                                            <input type="checkbox" name="dataField" value="photo">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Photo/Video</span>
+                                        </label>
+                                        <label class="checkbox-item" data-field="school">
+                                            <input type="checkbox" name="dataField" value="school">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">School/University</span>
+                                        </label>
+                                        <label class="checkbox-item" data-field="employment_gaps">
+                                            <input type="checkbox" name="dataField" value="employment_gaps">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Employment Gaps</span>
+                                        </label>
+                                        <label class="checkbox-item" data-field="social_media">
+                                            <input type="checkbox" name="dataField" value="social_media">
+                                            <span class="checkbox-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                                            <span class="checkbox-label">Social Media</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- Decision Type -->
+                            <div class="radio-group">
+                                <div class="radio-group-label">How are decisions made?</div>
+                                <div class="radio-options" id="decisionType">
+                                    <label class="radio-item" data-value="automated">
+                                        <input type="radio" name="decisionType" value="automated">
+                                        <span class="radio-circle"><span class="radio-dot"></span></span>
+                                        <span class="radio-label">Fully automated (no human review)</span>
+                                    </label>
+                                    <label class="radio-item" data-value="human_review_rejections">
+                                        <input type="radio" name="decisionType" value="human_review_rejections">
+                                        <span class="radio-circle"><span class="radio-dot"></span></span>
+                                        <span class="radio-label">Human reviews rejections only</span>
+                                    </label>
+                                    <label class="radio-item" data-value="human_review_all">
+                                        <input type="radio" name="decisionType" value="human_review_all">
+                                        <span class="radio-circle"><span class="radio-dot"></span></span>
+                                        <span class="radio-label">Human reviews all decisions</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Appeals Toggle -->
+                            <div class="appeals-toggle">
+                                <span class="appeals-label">Can users appeal decisions?</span>
+                                <div class="toggle-switch active" id="appealsToggle">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Context -->
+                            <div class="input-group">
+                                <label class="input-label">Additional Context (optional)</label>
+                                <textarea class="input-field" id="featureDescription" placeholder="Any other details about the feature..."></textarea>
+                            </div>
+
                             <button class="analyze-btn">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -2903,18 +3340,42 @@
             }
 
             setupEventListeners() {
+                // Checkbox toggle behavior
+                document.querySelectorAll('.checkbox-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        if (e.target.tagName !== 'INPUT') {
+                            const checkbox = item.querySelector('input[type="checkbox"]');
+                            checkbox.checked = !checkbox.checked;
+                        }
+                        item.classList.toggle('checked', item.querySelector('input').checked);
+                    });
+                });
+
+                // Radio button behavior
+                document.querySelectorAll('.radio-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const radio = item.querySelector('input[type="radio"]');
+                        radio.checked = true;
+                        // Update visual state for all items in group
+                        item.closest('.radio-options').querySelectorAll('.radio-item').forEach(r => {
+                            r.classList.toggle('selected', r.querySelector('input').checked);
+                        });
+                    });
+                });
+
+                // Toggle switch behavior
+                const appealsToggle = document.getElementById('appealsToggle');
+                if (appealsToggle) {
+                    appealsToggle.addEventListener('click', () => {
+                        appealsToggle.classList.toggle('active');
+                    });
+                }
+
                 // Quick Analysis Form
                 const analyzeBtn = document.querySelector('.analyze-btn');
-                const featureNameInput = document.querySelector('.input-field[placeholder*="Candidate"]');
-                const categorySelect = document.querySelector('.select-field');
-                const descriptionInput = document.querySelector('textarea.input-field');
 
                 analyzeBtn.addEventListener('click', async () => {
-                    await this.handleQuickAnalysis(
-                        featureNameInput?.value,
-                        categorySelect?.value,
-                        descriptionInput?.value
-                    );
+                    await this.handleHybridAnalysis();
                 });
 
                 // Export button
@@ -2928,6 +3389,91 @@
                 if (detailsBtn) {
                     detailsBtn.addEventListener('click', () => this.handleViewDetails());
                 }
+            }
+
+            collectFormData() {
+                // Get basic fields
+                const featureName = document.getElementById('featureName')?.value || '';
+                const category = document.getElementById('featureCategory')?.value || '';
+                const additionalContext = document.getElementById('featureDescription')?.value || '';
+
+                // Get selected data fields
+                const selectedFields = [];
+                document.querySelectorAll('.checkbox-item.checked').forEach(item => {
+                    selectedFields.push(item.dataset.field);
+                });
+
+                // Get decision type
+                const decisionTypeRadio = document.querySelector('input[name="decisionType"]:checked');
+                const decisionType = decisionTypeRadio?.value || 'human_review_all';
+
+                // Get appeals status
+                const appealsToggle = document.getElementById('appealsToggle');
+                const hasAppeals = appealsToggle?.classList.contains('active') ?? true;
+
+                return {
+                    featureName,
+                    category,
+                    selectedFields,
+                    decisionType,
+                    hasAppeals,
+                    additionalContext
+                };
+            }
+
+            buildDescription(formData) {
+                const parts = [];
+
+                // Add data fields
+                if (formData.selectedFields.length > 0) {
+                    const fieldNames = formData.selectedFields.map(f => f.replace(/_/g, ' ')).join(', ');
+                    parts.push(`System uses the following data: ${fieldNames}.`);
+                }
+
+                // Add decision type
+                const decisionDescriptions = {
+                    'automated': 'Decisions are made automatically without human review.',
+                    'human_review_rejections': 'Human reviews rejection decisions only.',
+                    'human_review_all': 'All decisions are reviewed by humans.'
+                };
+                parts.push(decisionDescriptions[formData.decisionType] || '');
+
+                // Add appeals status
+                if (!formData.hasAppeals) {
+                    parts.push('Users cannot appeal decisions.');
+                } else {
+                    parts.push('Users can appeal decisions.');
+                }
+
+                // Add additional context
+                if (formData.additionalContext) {
+                    parts.push(formData.additionalContext);
+                }
+
+                return parts.filter(p => p).join(' ');
+            }
+
+            async handleHybridAnalysis() {
+                const formData = this.collectFormData();
+                const description = this.buildDescription(formData);
+
+                // Validation
+                if (!formData.featureName) {
+                    showToast('Please enter a feature name', 'warning');
+                    return;
+                }
+
+                if (!formData.category) {
+                    showToast('Please select a category', 'warning');
+                    return;
+                }
+
+                if (formData.selectedFields.length === 0 && !formData.additionalContext) {
+                    showToast('Please select at least one data field or add context', 'warning');
+                    return;
+                }
+
+                await this.handleQuickAnalysis(formData.featureName, formData.category, description);
             }
 
             async handleQuickAnalysis(featureName, category, description) {
