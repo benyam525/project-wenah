@@ -9,11 +9,11 @@ from typing import Any
 
 from wenah.core.types import (
     ProductFeatureInput,
-    RuleEvaluation,
-    RuleResult,
     Rule,
     RuleConditionGroup,
     RuleConsequence,
+    RuleEvaluation,
+    RuleResult,
 )
 from wenah.rules.rule_loader import RuleLoader
 
@@ -109,9 +109,7 @@ class RuleEngine:
 
         if category not in self._rules_cache:
             rule_dicts = self.rule_loader.load_rules_by_category(category)
-            self._rules_cache[category] = [
-                self._dict_to_rule(r) for r in rule_dicts
-            ]
+            self._rules_cache[category] = [self._dict_to_rule(r) for r in rule_dicts]
 
         return self._rules_cache[category]
 
@@ -142,9 +140,7 @@ class RuleEngine:
         context = self._feature_to_context(feature)
 
         # Evaluate conditions
-        matches, match_confidence = self._evaluate_conditions(
-            rule.conditions, context
-        )
+        matches, match_confidence = self._evaluate_conditions(rule.conditions, context)
 
         if not matches:
             return None
@@ -308,9 +304,7 @@ class RuleEngine:
 
         # Handle array field paths (e.g., "feature.data_fields[*].name")
         if "[*]" in field_path:
-            return self._evaluate_array_condition(
-                field_path, operator, value, values, context
-            )
+            return self._evaluate_array_condition(field_path, operator, value, values, context)
 
         # Evaluate based on operator
         return self._compare(field_value, operator, value, values)
@@ -508,6 +502,7 @@ class RuleEngine:
 
         elif operator == "regex":
             import re
+
             try:
                 match = bool(re.search(value, str(field_value)))
                 return match, 1.0 if match else 0.0

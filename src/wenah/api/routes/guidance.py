@@ -11,30 +11,28 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 
 from wenah.api.schemas import (
-    DesignGuidanceRequest,
-    DesignGuidanceResponse,
-    DataFieldCheckRequest,
-    DataFieldGuidanceResponse,
     AlgorithmCheckRequest,
     AlgorithmGuidanceResponse,
-    FeatureGuidanceResponse,
-    APIRiskLevel,
     APIGuidanceLevel,
     APIProductCategory,
+    APIRiskLevel,
+    DataFieldCheckRequest,
+    DataFieldGuidanceResponse,
+    DesignGuidanceRequest,
+    DesignGuidanceResponse,
     ErrorResponse,
+    FeatureGuidanceResponse,
 )
 from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
     AlgorithmSpec,
+    DataFieldSpec,
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
     RiskLevel,
 )
 from wenah.use_cases.design_guidance import (
-    DesignGuidanceEngine,
     GuidanceLevel,
-    DesignChoice,
     get_design_guidance,
 )
 
@@ -209,18 +207,20 @@ async def get_design_guidance_endpoint(
                     legal_references=ag.legal_references,
                 )
 
-            feature_guidance.append(FeatureGuidanceResponse(
-                feature_name=fg.feature_name,
-                category=fg.category,
-                overall_risk=_convert_risk_level(fg.overall_risk),
-                design_choice=fg.design_choice.value,
-                summary=fg.summary,
-                data_field_guidance=data_field_guidance,
-                algorithm_guidance=algo_guidance,
-                general_recommendations=fg.general_recommendations,
-                compliance_checklist=fg.compliance_checklist,
-                applicable_laws=fg.applicable_laws,
-            ))
+            feature_guidance.append(
+                FeatureGuidanceResponse(
+                    feature_name=fg.feature_name,
+                    category=fg.category,
+                    overall_risk=_convert_risk_level(fg.overall_risk),
+                    design_choice=fg.design_choice.value,
+                    summary=fg.summary,
+                    data_field_guidance=data_field_guidance,
+                    algorithm_guidance=algo_guidance,
+                    general_recommendations=fg.general_recommendations,
+                    compliance_checklist=fg.compliance_checklist,
+                    applicable_laws=fg.applicable_laws,
+                )
+            )
 
         return DesignGuidanceResponse(
             product_name=result.product_name,
@@ -509,7 +509,10 @@ async def get_proxy_variables() -> dict[str, Any]:
         ],
         "requires_review": [
             {"variable": "Video analysis", "proxies_for": ["Race", "Gender", "Disability"]},
-            {"variable": "Voice analysis", "proxies_for": ["Gender", "National Origin", "Disability"]},
+            {
+                "variable": "Voice analysis",
+                "proxies_for": ["Gender", "National Origin", "Disability"],
+            },
             {"variable": "Facial analysis", "proxies_for": ["Race", "Gender", "Disability"]},
         ],
         "guidance": "Variables that correlate with protected classes may result in disparate impact liability even if not intentionally discriminatory. Always conduct disparate impact analysis when using these variables.",

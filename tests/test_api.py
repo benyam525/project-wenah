@@ -13,19 +13,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from wenah.api.main import create_app
-from wenah.api.schemas import (
-    APIProductCategory,
-    APIFeatureType,
-    APIRiskLevel,
-    APILaunchDecision,
-    APIGuidanceLevel,
-    APIDashboardView,
-)
 from wenah.config import Settings
 from wenah.core.types import RiskLevel
-from wenah.use_cases.prelaunch_check import LaunchDecision
 from wenah.use_cases.design_guidance import DesignChoice
-
+from wenah.use_cases.prelaunch_check import LaunchDecision
 
 # =============================================================================
 # Fixtures
@@ -220,9 +211,7 @@ class TestAssessmentRoutes:
         assert "overall_risk_level" in data
 
     @patch("wenah.api.routes.assess.get_risk_dashboard")
-    def test_quick_assessment(
-        self, mock_get_dashboard, client: TestClient, sample_feature: dict
-    ):
+    def test_quick_assessment(self, mock_get_dashboard, client: TestClient, sample_feature: dict):
         """Test quick assessment endpoint."""
         # Setup mock
         mock_dashboard = MagicMock()
@@ -336,9 +325,7 @@ class TestGuidanceRoutes:
     """Tests for design guidance endpoints."""
 
     @patch("wenah.api.routes.guidance.get_design_guidance")
-    def test_design_guidance(
-        self, mock_get_guidance, client: TestClient, sample_feature: dict
-    ):
+    def test_design_guidance(self, mock_get_guidance, client: TestClient, sample_feature: dict):
         """Test design guidance endpoint."""
         # Setup mock
         mock_engine = MagicMock()
@@ -512,9 +499,7 @@ class TestPrelaunchRoutes:
     """Tests for pre-launch check endpoints."""
 
     @patch("wenah.api.routes.check.get_prelaunch_checker")
-    def test_prelaunch_check(
-        self, mock_get_checker, client: TestClient, sample_feature: dict
-    ):
+    def test_prelaunch_check(self, mock_get_checker, client: TestClient, sample_feature: dict):
         """Test full pre-launch check endpoint."""
         # Setup mock
         mock_checker = MagicMock()

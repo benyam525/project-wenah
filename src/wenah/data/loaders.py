@@ -11,7 +11,7 @@ from typing import Any
 import yaml
 
 from wenah.config import settings
-from wenah.core.types import LawDocument, LawCategory
+from wenah.core.types import LawCategory, LawDocument
 
 
 class LawLoader:
@@ -83,7 +83,7 @@ class LawLoader:
             Parsed law data or None if error
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return yaml.safe_load(f)
         except (yaml.YAMLError, OSError) as e:
             print(f"Error loading {file_path}: {e}")
@@ -168,12 +168,8 @@ class LawLoader:
                 citation=law.get("citation", ""),
                 category=LawCategory(law.get("category", "employment")),
                 effective_date=law.get("effective_date"),
-                protected_classes=[
-                    pc.get("id", "") for pc in law.get("protected_classes", [])
-                ],
-                covered_entities=[
-                    ce.get("id", "") for ce in law.get("covered_entities", [])
-                ],
+                protected_classes=[pc.get("id", "") for pc in law.get("protected_classes", [])],
+                covered_entities=[ce.get("id", "") for ce in law.get("covered_entities", [])],
                 remedies=law.get("remedies", []),
             )
         except Exception as e:
@@ -230,7 +226,7 @@ class RuleLoader:
             Parsed rule data or None if error
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return yaml.safe_load(f)
         except (yaml.YAMLError, OSError) as e:
             print(f"Error loading {file_path}: {e}")
@@ -292,9 +288,7 @@ class PrecedentLoader:
             precedents_directory: Directory containing precedent YAML files.
                                  Defaults to config setting.
         """
-        self.precedents_directory = Path(
-            precedents_directory or settings.precedents_directory
-        )
+        self.precedents_directory = Path(precedents_directory or settings.precedents_directory)
 
     def load_all_precedents(self) -> list[dict[str, Any]]:
         """
@@ -327,7 +321,7 @@ class PrecedentLoader:
             Parsed precedent data or None if error
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return yaml.safe_load(f)
         except (yaml.YAMLError, OSError) as e:
             print(f"Error loading {file_path}: {e}")

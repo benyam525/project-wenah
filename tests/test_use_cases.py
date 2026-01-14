@@ -7,49 +7,44 @@ Tests cover:
 - PrelaunchChecker: Compliance checks and launch decisions
 """
 
+from datetime import UTC, datetime
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timezone
 
 from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
     AlgorithmSpec,
-    RiskLevel,
-    RuleEvaluation,
-    RuleResult,
     CategoryBreakdown,
-    ViolationDetail,
+    DataFieldSpec,
+    FeatureAssessment,
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
     RecommendationItem,
     RiskAssessmentResponse,
-    FeatureAssessment,
-)
-from wenah.use_cases.risk_dashboard import (
-    RiskDashboard,
-    DashboardData,
-    DashboardViewType,
-    FeatureRiskSummary,
-    CategoryRiskDetail,
-    get_risk_dashboard,
+    RiskLevel,
 )
 from wenah.use_cases.design_guidance import (
+    AlgorithmGuidance,
+    DataFieldGuidance,
+    DesignChoice,
     DesignGuidanceEngine,
     DesignGuidanceResponse,
     GuidanceLevel,
-    DesignChoice,
-    DataFieldGuidance,
-    AlgorithmGuidance,
     get_design_guidance,
 )
 from wenah.use_cases.prelaunch_check import (
+    LaunchDecision,
     PrelaunchChecker,
     PrelaunchCheckResponse,
-    LaunchDecision,
-    CheckStatus,
-    ComplianceCheckItem,
     get_prelaunch_checker,
+)
+from wenah.use_cases.risk_dashboard import (
+    DashboardData,
+    DashboardViewType,
+    FeatureRiskSummary,
+    RiskDashboard,
+    get_risk_dashboard,
 )
 
 
@@ -65,7 +60,7 @@ class TestRiskDashboard:
         engine.assess_product.return_value = RiskAssessmentResponse(
             assessment_id="test-001",
             product_name="Test Product",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             overall_risk_score=55.0,
             overall_risk_level=RiskLevel.MEDIUM,
             confidence_score=0.8,
@@ -190,7 +185,7 @@ class TestRiskDashboard:
         data = DashboardData(
             product_name="Test Product",
             assessment_id="test-001",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             view_type=DashboardViewType.DETAILED,
             overall_score=60.0,
             overall_risk_level=RiskLevel.HIGH,
@@ -230,7 +225,7 @@ class TestRiskDashboard:
         data = DashboardData(
             product_name="Test Product",
             assessment_id="test-001",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             view_type=DashboardViewType.DETAILED,
             overall_score=30.0,
             overall_risk_level=RiskLevel.LOW,
@@ -330,9 +325,7 @@ class TestDesignGuidanceEngine:
             bias_testing_done=False,
         )
 
-        result = guidance_engine.check_algorithm_design(
-            algo, ProductCategory.HIRING
-        )
+        result = guidance_engine.check_algorithm_design(algo, ProductCategory.HIRING)
 
         assert isinstance(result, AlgorithmGuidance)
         assert result.risk_level == RiskLevel.HIGH
@@ -349,9 +342,7 @@ class TestDesignGuidanceEngine:
             bias_testing_done=True,
         )
 
-        result = guidance_engine.check_algorithm_design(
-            algo, ProductCategory.HIRING
-        )
+        result = guidance_engine.check_algorithm_design(algo, ProductCategory.HIRING)
 
         assert result.risk_level == RiskLevel.CRITICAL
         assert result.design_choice == DesignChoice.REQUIRES_REVIEW
@@ -367,9 +358,7 @@ class TestDesignGuidanceEngine:
             bias_testing_done=False,
         )
 
-        result = guidance_engine.check_algorithm_design(
-            algo, ProductCategory.HIRING
-        )
+        result = guidance_engine.check_algorithm_design(algo, ProductCategory.HIRING)
 
         assert result.risk_level == RiskLevel.LOW
         assert result.design_choice == DesignChoice.RECOMMENDED
@@ -418,10 +407,7 @@ class TestDesignGuidanceEngine:
 
         # Should have warnings about proxy variables
         feature_guidance = result.feature_guidance[0]
-        proxy_fields = [
-            fg for fg in feature_guidance.data_field_guidance
-            if fg.is_proxy_variable
-        ]
+        proxy_fields = [fg for fg in feature_guidance.data_field_guidance if fg.is_proxy_variable]
         assert len(proxy_fields) > 0
 
 
@@ -435,7 +421,7 @@ class TestPrelaunchChecker:
         engine.assess_product.return_value = RiskAssessmentResponse(
             assessment_id="test-001",
             product_name="Test Product",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             overall_risk_score=45.0,
             overall_risk_level=RiskLevel.MEDIUM,
             confidence_score=0.8,
@@ -720,7 +706,7 @@ class TestIntegrationScenarios:
         engine.assess_product.return_value = RiskAssessmentResponse(
             assessment_id="int-001",
             product_name="Integration Test",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             overall_risk_score=35.0,
             overall_risk_level=RiskLevel.LOW,
             confidence_score=0.9,
@@ -780,7 +766,11 @@ class TestIntegrationScenarios:
                     level=GuidanceLevel.STANDARD,
                 )
 
-        assert design_result.overall_design_risk in [RiskLevel.LOW, RiskLevel.MINIMAL, RiskLevel.MEDIUM]
+        assert design_result.overall_design_risk in [
+            RiskLevel.LOW,
+            RiskLevel.MINIMAL,
+            RiskLevel.MEDIUM,
+        ]
 
         # Step 2: Run risk dashboard assessment
         dashboard = RiskDashboard(compliance_engine=mock_engine)

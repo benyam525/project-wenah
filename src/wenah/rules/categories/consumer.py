@@ -13,7 +13,6 @@ from typing import Any
 
 from wenah.core.types import ProductFeatureInput
 
-
 # ECOA Protected Classes
 ECOA_PROTECTED_CLASSES = {
     "race",

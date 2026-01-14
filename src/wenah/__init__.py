@@ -9,8 +9,8 @@ __version__ = "0.1.0"
 __author__ = "Project Wenah Team"
 
 from wenah.core.types import (
-    ProductCategory,
     FeatureType,
+    ProductCategory,
     RiskLevel,
     RuleResult,
 )

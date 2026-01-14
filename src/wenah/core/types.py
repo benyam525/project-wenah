@@ -8,10 +8,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Union
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # =============================================================================
 # Enums
@@ -86,12 +85,8 @@ class DataFieldSpec(BaseModel):
 
     name: str = Field(..., description="Name of the data field")
     description: str = Field(..., description="Description of what this field contains")
-    data_type: str = Field(
-        ..., description="Type of data: text, numeric, categorical, boolean"
-    )
-    source: str = Field(
-        ..., description="Source: user_input, derived, third_party, inferred"
-    )
+    data_type: str = Field(..., description="Type of data: text, numeric, categorical, boolean")
+    source: str = Field(..., description="Source: user_input, derived, third_party, inferred")
     required: bool = Field(default=False, description="Whether this field is required")
     used_in_decisions: bool = Field(
         default=False, description="Whether this field is used in decision-making"
@@ -136,12 +131,8 @@ class ProductFeatureInput(BaseModel):
     )
 
     # Decision impact
-    decision_impact: str = Field(
-        ..., description="What decisions does this feature influence?"
-    )
-    affected_population: str = Field(
-        ..., description="Who is affected by this feature?"
-    )
+    decision_impact: str = Field(..., description="What decisions does this feature influence?")
+    affected_population: str = Field(..., description="Who is affected by this feature?")
 
     # Context
     company_size: int | None = Field(
@@ -168,16 +159,14 @@ class RuleCondition(BaseModel):
     field: str = Field(..., description="Field path to evaluate")
     operator: str = Field(..., description="Comparison operator")
     value: Any = Field(default=None, description="Value for single comparison")
-    values: list[Any] | None = Field(
-        default=None, description="Values for multi-value comparison"
-    )
+    values: list[Any] | None = Field(default=None, description="Values for multi-value comparison")
 
 
 class RuleConditionGroup(BaseModel):
     """A group of conditions with AND/OR logic."""
 
     operator: str = Field(default="AND", description="Logical operator: AND or OR")
-    items: list[Union["RuleCondition", "RuleConditionGroup"]] = Field(
+    items: list[RuleCondition | RuleConditionGroup] = Field(
         default_factory=list, description="Conditions or nested groups"
     )
 
@@ -192,7 +181,12 @@ class RuleConsequence(BaseModel):
     violation: bool | str = Field(
         ..., description="True, False, or 'potential' for violation status"
     )
-    risk_score: int = Field(..., ge=-100, le=100, description="Risk score -100 to 100 (negative for positive indicators)")
+    risk_score: int = Field(
+        ...,
+        ge=-100,
+        le=100,
+        description="Risk score -100 to 100 (negative for positive indicators)",
+    )
     law_reference: str = Field(..., description="Reference to applicable law")
     recommendation: str = Field(..., description="Recommended action")
     escalate_to_llm: bool = Field(
@@ -224,19 +218,16 @@ class RuleEvaluation(BaseModel):
     rule_name: str = Field(..., description="Name of the evaluated rule")
     result: RuleResult = Field(..., description="Result of evaluation")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in result")
-    risk_score: int = Field(..., ge=-100, le=100, description="Risk score -100 to 100 (negative for positive indicators)")
-    law_references: list[str] = Field(
-        default_factory=list, description="Applicable law references"
+    risk_score: int = Field(
+        ...,
+        ge=-100,
+        le=100,
+        description="Risk score -100 to 100 (negative for positive indicators)",
     )
-    recommendations: list[str] = Field(
-        default_factory=list, description="Recommended actions"
-    )
-    escalate_to_llm: bool = Field(
-        default=False, description="Whether to escalate to LLM"
-    )
-    llm_context: dict[str, Any] | None = Field(
-        default=None, description="Context for LLM analysis"
-    )
+    law_references: list[str] = Field(default_factory=list, description="Applicable law references")
+    recommendations: list[str] = Field(default_factory=list, description="Recommended actions")
+    escalate_to_llm: bool = Field(default=False, description="Whether to escalate to LLM")
+    llm_context: dict[str, Any] | None = Field(default=None, description="Context for LLM analysis")
 
 
 # =============================================================================
@@ -248,22 +239,14 @@ class RAGResponse(BaseModel):
     """Structured output from RAG analysis."""
 
     analysis: str = Field(..., description="Detailed analysis text")
-    confidence_score: float = Field(
-        ..., ge=0.0, le=1.0, description="Confidence in analysis"
-    )
-    cited_sources: list[str] = Field(
-        default_factory=list, description="Law sources cited"
-    )
-    risk_factors: list[str] = Field(
-        default_factory=list, description="Identified risk factors"
-    )
+    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence in analysis")
+    cited_sources: list[str] = Field(default_factory=list, description="Law sources cited")
+    risk_factors: list[str] = Field(default_factory=list, description="Identified risk factors")
     mitigating_factors: list[str] = Field(
         default_factory=list, description="Mitigating factors found"
     )
     recommendation: str = Field(..., description="Primary recommendation")
-    requires_human_review: bool = Field(
-        default=False, description="Whether human review is needed"
-    )
+    requires_human_review: bool = Field(default=False, description="Whether human review is needed")
 
 
 class GuardrailCheck(BaseModel):
@@ -317,9 +300,7 @@ class UnifiedRiskScore(BaseModel):
     primary_concerns: list[str] = Field(
         default_factory=list, description="Primary compliance concerns"
     )
-    recommendations: list[str] = Field(
-        default_factory=list, description="Recommended actions"
-    )
+    recommendations: list[str] = Field(default_factory=list, description="Recommended actions")
     requires_human_review: bool = Field(
         default=False, description="Whether human review is recommended"
     )
@@ -352,9 +333,7 @@ class RecommendationItem(BaseModel):
     recommendation: str = Field(..., description="The recommendation")
     rationale: str = Field(..., description="Why this is recommended")
     estimated_effort: str = Field(..., description="Effort: low, medium, high")
-    law_references: list[str] = Field(
-        default_factory=list, description="Related law references"
-    )
+    law_references: list[str] = Field(default_factory=list, description="Related law references")
 
 
 class FeatureAssessment(BaseModel):
@@ -382,9 +361,7 @@ class RiskAssessmentResponse(BaseModel):
 
     assessment_id: str = Field(..., description="Unique assessment identifier")
     product_name: str = Field(..., description="Name of assessed product")
-    timestamp: datetime = Field(
-        default_factory=datetime.utcnow, description="Assessment timestamp"
-    )
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Assessment timestamp")
 
     # Overall scores
     overall_risk_score: float = Field(..., ge=0, le=100)

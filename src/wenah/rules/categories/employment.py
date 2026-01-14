@@ -8,38 +8,59 @@ including employment-specific logic and enhancements.
 from typing import Any
 
 from wenah.core.types import (
-    ProductFeatureInput,
-    RuleEvaluation,
-    RuleResult,
     DataFieldSpec,
+    ProductFeatureInput,
 )
-
 
 # Protected class indicators that trigger scrutiny
 PROTECTED_CLASS_FIELDS = {
     # Race/Color
-    "race", "ethnicity", "ethnic_background", "racial_identity",
-    "skin_color", "complexion",
-
+    "race",
+    "ethnicity",
+    "ethnic_background",
+    "racial_identity",
+    "skin_color",
+    "complexion",
     # Religion
-    "religion", "religious_affiliation", "faith", "religious_belief",
-    "church", "mosque", "synagogue", "temple",
-
+    "religion",
+    "religious_affiliation",
+    "faith",
+    "religious_belief",
+    "church",
+    "mosque",
+    "synagogue",
+    "temple",
     # Sex/Gender
-    "sex", "gender", "gender_identity", "sexual_orientation",
-    "pregnancy", "pregnant", "maternity",
-
+    "sex",
+    "gender",
+    "gender_identity",
+    "sexual_orientation",
+    "pregnancy",
+    "pregnant",
+    "maternity",
     # National Origin
-    "national_origin", "country_of_origin", "nationality", "citizenship",
-    "birthplace", "native_language", "immigration_status",
-
+    "national_origin",
+    "country_of_origin",
+    "nationality",
+    "citizenship",
+    "birthplace",
+    "native_language",
+    "immigration_status",
     # Disability (ADA)
-    "disability", "disabled", "handicap", "impairment",
-    "medical_condition", "health_condition", "mental_health",
-    "physical_limitation", "accommodation_needed",
-
+    "disability",
+    "disabled",
+    "handicap",
+    "impairment",
+    "medical_condition",
+    "health_condition",
+    "mental_health",
+    "physical_limitation",
+    "accommodation_needed",
     # Age (ADEA - not Title VII but often evaluated together)
-    "age", "date_of_birth", "birth_date", "graduation_year",
+    "age",
+    "date_of_birth",
+    "birth_date",
+    "graduation_year",
 }
 
 # Proxy variables that may correlate with protected classes
@@ -50,17 +71,14 @@ PROXY_INDICATORS = {
     "neighborhood": ["race", "national_origin"],
     "census_tract": ["race", "national_origin"],
     "school_district": ["race", "national_origin"],
-
     # Name-based (race/national origin/sex proxy)
     "first_name": ["race", "national_origin", "sex"],
     "last_name": ["race", "national_origin"],
     "surname": ["race", "national_origin"],
-
     # Education (race/socioeconomic proxy)
     "school_attended": ["race", "socioeconomic"],
     "college_attended": ["race", "socioeconomic"],
     "university": ["race", "socioeconomic"],
-
     # Social (various proxies)
     "social_media": ["religion", "national_origin", "disability"],
     "profile_photo": ["race", "sex", "disability", "religion"],
@@ -69,10 +87,18 @@ PROXY_INDICATORS = {
 
 # Medical inquiry indicators (ADA pre-offer prohibition)
 MEDICAL_INQUIRY_FIELDS = {
-    "disability", "medical_history", "health_condition",
-    "prescription", "medication", "workers_compensation",
-    "sick_leave_history", "mental_health", "physical_exam",
-    "drug_test_result", "genetic_information", "family_medical_history",
+    "disability",
+    "medical_history",
+    "health_condition",
+    "prescription",
+    "medication",
+    "workers_compensation",
+    "sick_leave_history",
+    "mental_health",
+    "physical_exam",
+    "drug_test_result",
+    "genetic_information",
+    "family_medical_history",
 }
 
 
@@ -123,12 +149,8 @@ class EmploymentCategoryProcessor:
                 analysis["protected_class_exposure"].extend(
                     field_analysis.get("protected_class_exposure", [])
                 )
-                analysis["proxy_variable_concerns"].extend(
-                    field_analysis.get("proxy_concerns", [])
-                )
-                analysis["ada_concerns"].extend(
-                    field_analysis.get("ada_concerns", [])
-                )
+                analysis["proxy_variable_concerns"].extend(field_analysis.get("proxy_concerns", []))
+                analysis["ada_concerns"].extend(field_analysis.get("ada_concerns", []))
 
         # Analyze algorithm if present
         if feature.algorithm:
@@ -161,26 +183,32 @@ class EmploymentCategoryProcessor:
         # Check for direct protected class data collection
         for protected_field in self.protected_class_fields:
             if protected_field in field_name_lower:
-                findings.append({
-                    "type": "protected_class_data",
-                    "field": data_field.name,
-                    "matched": protected_field,
-                    "severity": "critical" if data_field.used_in_decisions else "high",
-                })
-                protected_class_exposure.append({
-                    "field": data_field.name,
-                    "protected_class": protected_field,
-                    "used_in_decisions": data_field.used_in_decisions,
-                })
+                findings.append(
+                    {
+                        "type": "protected_class_data",
+                        "field": data_field.name,
+                        "matched": protected_field,
+                        "severity": "critical" if data_field.used_in_decisions else "high",
+                    }
+                )
+                protected_class_exposure.append(
+                    {
+                        "field": data_field.name,
+                        "protected_class": protected_field,
+                        "used_in_decisions": data_field.used_in_decisions,
+                    }
+                )
 
         # Check for proxy variables
         for proxy_field, related_classes in self.proxy_indicators.items():
             if proxy_field in field_name_lower:
-                proxy_concerns.append({
-                    "field": data_field.name,
-                    "proxy_for": related_classes,
-                    "used_in_decisions": data_field.used_in_decisions,
-                })
+                proxy_concerns.append(
+                    {
+                        "field": data_field.name,
+                        "proxy_for": related_classes,
+                        "used_in_decisions": data_field.used_in_decisions,
+                    }
+                )
                 if data_field.used_in_decisions:
                     risk_factors.append(
                         f"Field '{data_field.name}' may proxy for {', '.join(related_classes)}"
@@ -190,24 +218,30 @@ class EmploymentCategoryProcessor:
         if feature.category.value == "hiring":
             for medical_field in self.medical_inquiry_fields:
                 if medical_field in field_name_lower:
-                    ada_concerns.append({
-                        "type": "pre_offer_medical_inquiry",
-                        "field": data_field.name,
-                        "severity": "critical",
-                    })
-                    findings.append({
-                        "type": "ada_violation",
-                        "field": data_field.name,
-                        "issue": "Pre-offer medical inquiry prohibited under ADA",
-                    })
+                    ada_concerns.append(
+                        {
+                            "type": "pre_offer_medical_inquiry",
+                            "field": data_field.name,
+                            "severity": "critical",
+                        }
+                    )
+                    findings.append(
+                        {
+                            "type": "ada_violation",
+                            "field": data_field.name,
+                            "issue": "Pre-offer medical inquiry prohibited under ADA",
+                        }
+                    )
 
         # Check for potential proxy annotation
         if data_field.potential_proxy:
-            proxy_concerns.append({
-                "field": data_field.name,
-                "annotated_proxy_for": data_field.potential_proxy,
-                "used_in_decisions": data_field.used_in_decisions,
-            })
+            proxy_concerns.append(
+                {
+                    "field": data_field.name,
+                    "annotated_proxy_for": data_field.potential_proxy,
+                    "used_in_decisions": data_field.used_in_decisions,
+                }
+            )
 
         return {
             "findings": findings,
@@ -234,36 +268,40 @@ class EmploymentCategoryProcessor:
             input_lower = input_field.lower()
             for protected_field in self.protected_class_fields:
                 if protected_field in input_lower:
-                    findings.append({
-                        "type": "algorithm_protected_class_input",
-                        "input": input_field,
-                        "matched": protected_field,
-                        "severity": "critical",
-                    })
+                    findings.append(
+                        {
+                            "type": "algorithm_protected_class_input",
+                            "input": input_field,
+                            "matched": protected_field,
+                            "severity": "critical",
+                        }
+                    )
 
         # Check for bias testing
         if not algo.bias_testing_done:
             if algo.type in ["ml_model", "llm"]:
-                risk_factors.append(
-                    "ML/AI algorithm has not undergone bias testing"
+                risk_factors.append("ML/AI algorithm has not undergone bias testing")
+                findings.append(
+                    {
+                        "type": "missing_bias_testing",
+                        "algorithm": algo.name,
+                        "severity": "high",
+                    }
                 )
-                findings.append({
-                    "type": "missing_bias_testing",
-                    "algorithm": algo.name,
-                    "severity": "high",
-                })
 
         # Check for high-risk algorithm types in hiring
         if feature.category.value == "hiring":
             risky_inputs = {"video", "facial", "voice", "speech", "emotion"}
             for input_field in algo.inputs:
                 if any(r in input_field.lower() for r in risky_inputs):
-                    findings.append({
-                        "type": "high_risk_hiring_algorithm",
-                        "input": input_field,
-                        "severity": "high",
-                        "concern": "May disadvantage individuals with disabilities",
-                    })
+                    findings.append(
+                        {
+                            "type": "high_risk_hiring_algorithm",
+                            "input": input_field,
+                            "severity": "high",
+                            "concern": "May disadvantage individuals with disabilities",
+                        }
+                    )
 
         return {"findings": findings, "risk_factors": risk_factors}
 
@@ -277,69 +315,74 @@ class EmploymentCategoryProcessor:
 
         # Critical: Protected class data in decisions
         protected_in_decisions = [
-            p for p in analysis.get("protected_class_exposure", [])
-            if p.get("used_in_decisions")
+            p for p in analysis.get("protected_class_exposure", []) if p.get("used_in_decisions")
         ]
         if protected_in_decisions:
-            recommendations.append({
-                "priority": priority,
-                "category": "data_collection",
-                "recommendation": (
-                    "Remove protected class data from decision-making inputs. "
-                    "If required for EEO reporting, collect separately after "
-                    "hiring decision and ensure strict separation."
-                ),
-                "affected_fields": [p["field"] for p in protected_in_decisions],
-            })
+            recommendations.append(
+                {
+                    "priority": priority,
+                    "category": "data_collection",
+                    "recommendation": (
+                        "Remove protected class data from decision-making inputs. "
+                        "If required for EEO reporting, collect separately after "
+                        "hiring decision and ensure strict separation."
+                    ),
+                    "affected_fields": [p["field"] for p in protected_in_decisions],
+                }
+            )
             priority += 1
 
         # Critical: ADA concerns
         if analysis.get("ada_concerns"):
-            recommendations.append({
-                "priority": priority,
-                "category": "ada_compliance",
-                "recommendation": (
-                    "Remove all medical and disability-related inquiries from "
-                    "pre-offer stage. Medical examinations are only permitted "
-                    "after conditional offer of employment."
-                ),
-                "affected_fields": [c["field"] for c in analysis["ada_concerns"]],
-            })
+            recommendations.append(
+                {
+                    "priority": priority,
+                    "category": "ada_compliance",
+                    "recommendation": (
+                        "Remove all medical and disability-related inquiries from "
+                        "pre-offer stage. Medical examinations are only permitted "
+                        "after conditional offer of employment."
+                    ),
+                    "affected_fields": [c["field"] for c in analysis["ada_concerns"]],
+                }
+            )
             priority += 1
 
         # High: Proxy variables
         proxy_in_decisions = [
-            p for p in analysis.get("proxy_variable_concerns", [])
-            if p.get("used_in_decisions")
+            p for p in analysis.get("proxy_variable_concerns", []) if p.get("used_in_decisions")
         ]
         if proxy_in_decisions:
-            recommendations.append({
-                "priority": priority,
-                "category": "disparate_impact",
-                "recommendation": (
-                    "Conduct disparate impact analysis on outcomes by protected class. "
-                    "If impact exists, demonstrate business necessity or remove "
-                    "proxy variables from decision inputs."
-                ),
-                "affected_fields": [p["field"] for p in proxy_in_decisions],
-            })
+            recommendations.append(
+                {
+                    "priority": priority,
+                    "category": "disparate_impact",
+                    "recommendation": (
+                        "Conduct disparate impact analysis on outcomes by protected class. "
+                        "If impact exists, demonstrate business necessity or remove "
+                        "proxy variables from decision inputs."
+                    ),
+                    "affected_fields": [p["field"] for p in proxy_in_decisions],
+                }
+            )
             priority += 1
 
         # Medium: Missing bias testing
         bias_findings = [
-            f for f in analysis.get("findings", [])
-            if f.get("type") == "missing_bias_testing"
+            f for f in analysis.get("findings", []) if f.get("type") == "missing_bias_testing"
         ]
         if bias_findings:
-            recommendations.append({
-                "priority": priority,
-                "category": "bias_testing",
-                "recommendation": (
-                    "Conduct bias audit on AI/ML algorithms before deployment. "
-                    "Test for disparate impact across all protected classes. "
-                    "Document results and remediation steps."
-                ),
-            })
+            recommendations.append(
+                {
+                    "priority": priority,
+                    "category": "bias_testing",
+                    "recommendation": (
+                        "Conduct bias audit on AI/ML algorithms before deployment. "
+                        "Test for disparate impact across all protected classes. "
+                        "Document results and remediation steps."
+                    ),
+                }
+            )
             priority += 1
 
         return recommendations
@@ -349,12 +392,8 @@ class EmploymentCategoryProcessor:
         findings = analysis.get("findings", [])
 
         # Count by severity
-        critical_count = sum(
-            1 for f in findings if f.get("severity") == "critical"
-        )
-        high_count = sum(
-            1 for f in findings if f.get("severity") == "high"
-        )
+        critical_count = sum(1 for f in findings if f.get("severity") == "critical")
+        high_count = sum(1 for f in findings if f.get("severity") == "high")
 
         if critical_count > 0:
             return "critical"
@@ -407,13 +446,9 @@ class EmploymentCategoryProcessor:
                 "Employer is covered by Title VII and ADA but not ADEA (age discrimination)."
             )
         elif company_size < 50:
-            notes.append(
-                "Employer is covered by Title VII, ADA, and ADEA but not FMLA."
-            )
+            notes.append("Employer is covered by Title VII, ADA, and ADEA but not FMLA.")
         else:
-            notes.append(
-                "Employer is covered by all major federal employment laws."
-            )
+            notes.append("Employer is covered by all major federal employment laws.")
 
         return notes
 

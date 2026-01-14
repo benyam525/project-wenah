@@ -5,9 +5,8 @@ Contains structured prompts for various compliance analysis scenarios,
 designed to elicit accurate, well-grounded responses from Claude.
 """
 
-from typing import Any
 from string import Template
-
+from typing import Any
 
 # =============================================================================
 # System Prompts
@@ -395,6 +394,7 @@ IMPORTANT: Respond ONLY with the JSON object. No additional text.""")
 # =============================================================================
 # Helper Functions
 # =============================================================================
+
 
 def format_context_documents(documents: list[dict[str, Any]]) -> str:
     """Format context documents for inclusion in prompts."""

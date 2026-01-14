@@ -6,39 +6,37 @@ Provides endpoints for risk assessment of products and features.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
 from wenah.api.schemas import (
-    RiskAssessmentRequest,
-    RiskAssessmentResponse,
-    QuickAssessmentRequest,
-    QuickAssessmentResponse,
-    TextAssessmentRequest,
-    TextAssessmentResponse,
+    APIDashboardView,
+    APIRiskLevel,
+    CategoryBreakdownResponse,
+    ErrorResponse,
     ExtractedFieldResponse,
     FeatureAssessmentRequest,
     FeatureAssessmentResponse,
     FeatureQuickResponse,
-    ViolationResponse,
+    QuickAssessmentRequest,
+    QuickAssessmentResponse,
     RecommendationResponse,
-    CategoryBreakdownResponse,
-    APIRiskLevel,
-    APIDashboardView,
-    ErrorResponse,
+    RiskAssessmentRequest,
+    RiskAssessmentResponse,
+    TextAssessmentRequest,
+    TextAssessmentResponse,
+    ViolationResponse,
 )
 from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
     AlgorithmSpec,
+    DataFieldSpec,
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
     RiskLevel,
 )
 from wenah.use_cases.risk_dashboard import (
-    RiskDashboard,
     DashboardViewType,
     get_risk_dashboard,
 )
@@ -213,17 +211,19 @@ async def assess_risk(request: RiskAssessmentRequest) -> RiskAssessmentResponse:
                 if r.category == fa.feature_name.lower() or True  # Include all for now
             ][:3]
 
-            feature_assessments.append(FeatureAssessmentResponse(
-                feature_id=fa.feature_id,
-                feature_name=fa.feature_name,
-                risk_score=fa.score,
-                risk_level=_convert_risk_level(fa.risk_level),
-                violations=feature_violations,
-                recommendations=feature_recs,
-                compliant_aspects=[],
-                requires_human_review=fa.requires_attention,
-                llm_analysis_summary=None,
-            ))
+            feature_assessments.append(
+                FeatureAssessmentResponse(
+                    feature_id=fa.feature_id,
+                    feature_name=fa.feature_name,
+                    risk_score=fa.score,
+                    risk_level=_convert_risk_level(fa.risk_level),
+                    violations=feature_violations,
+                    recommendations=feature_recs,
+                    compliant_aspects=[],
+                    requires_human_review=fa.requires_attention,
+                    llm_analysis_summary=None,
+                )
+            )
 
         # Build critical violations
         critical_violations = [
@@ -233,10 +233,7 @@ async def assess_risk(request: RiskAssessmentRequest) -> RiskAssessmentResponse:
         ]
 
         # Build all recommendations
-        all_recs = [
-            _build_recommendation_response(r)
-            for r in result.all_recommendations
-        ]
+        all_recs = [_build_recommendation_response(r) for r in result.all_recommendations]
 
         return RiskAssessmentResponse(
             assessment_id=result.assessment_id,
@@ -303,12 +300,14 @@ async def quick_assess(request: QuickAssessmentRequest) -> QuickAssessmentRespon
         feature_scores = []
         for feature in features:
             quick_result = dashboard.engine.quick_assess(feature)
-            feature_scores.append({
-                "feature_id": feature.feature_id,
-                "risk_score": quick_result["risk_score"],
-                "risk_level": quick_result["risk_level"],
-                "violations_count": quick_result["violations_count"],
-            })
+            feature_scores.append(
+                {
+                    "feature_id": feature.feature_id,
+                    "risk_score": quick_result["risk_score"],
+                    "risk_level": quick_result["risk_level"],
+                    "violations_count": quick_result["violations_count"],
+                }
+            )
 
         return QuickAssessmentResponse(
             overall_score=result["overall_score"],
@@ -355,8 +354,9 @@ async def assess_text(request: TextAssessmentRequest) -> TextAssessmentResponse:
     4. Run full compliance analysis with rule engine + LLM
     """
     try:
-        from wenah.llm.text_extractor import get_text_extractor
         import uuid
+
+        from wenah.llm.text_extractor import get_text_extractor
 
         dashboard = get_risk_dashboard()
 
@@ -396,16 +396,12 @@ async def assess_text(request: TextAssessmentRequest) -> TextAssessmentResponse:
         ]
 
         # Build violations
-        violations = [
-            _build_violation_response(v)
-            for v in result.all_violations
-        ]
+        violations = [_build_violation_response(v) for v in result.all_violations]
 
         # Build recommendations
-        recommendations = [
-            _build_recommendation_response(r)
-            for r in result.all_recommendations
-        ][:5]
+        recommendations = [_build_recommendation_response(r) for r in result.all_recommendations][
+            :5
+        ]
 
         # Get feature summary
         if result.feature_summaries:
@@ -474,15 +470,11 @@ async def assess_feature(request: FeatureAssessmentRequest) -> FeatureAssessment
             fs = result.feature_summaries[0]
 
             # Build violations
-            violations = [
-                _build_violation_response(v)
-                for v in result.all_violations
-            ]
+            violations = [_build_violation_response(v) for v in result.all_violations]
 
             # Build recommendations
             recommendations = [
-                _build_recommendation_response(r)
-                for r in result.all_recommendations
+                _build_recommendation_response(r) for r in result.all_recommendations
             ][:5]
 
             return FeatureAssessmentResponse(
@@ -494,7 +486,9 @@ async def assess_feature(request: FeatureAssessmentRequest) -> FeatureAssessment
                 recommendations=recommendations,
                 compliant_aspects=result.positive_aspects,
                 requires_human_review=result.requires_human_review,
-                llm_analysis_summary=result.executive_summary[:500] if result.executive_summary else None,
+                llm_analysis_summary=result.executive_summary[:500]
+                if result.executive_summary
+                else None,
             )
 
         raise HTTPException(

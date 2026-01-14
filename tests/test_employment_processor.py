@@ -4,18 +4,14 @@ Tests for the employment category processor.
 
 import pytest
 
-from wenah.rules.categories.employment import (
-    EmploymentCategoryProcessor,
-    get_employment_processor,
-    PROTECTED_CLASS_FIELDS,
-    PROXY_INDICATORS,
-)
 from wenah.core.types import (
     ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
-    AlgorithmSpec,
+)
+from wenah.rules.categories.employment import (
+    PROTECTED_CLASS_FIELDS,
+    PROXY_INDICATORS,
+    EmploymentCategoryProcessor,
+    get_employment_processor,
 )
 
 
@@ -50,9 +46,7 @@ class TestEmploymentCategoryProcessor:
         assert len(analysis["protected_class_exposure"]) > 0
 
         # Should find race and disability
-        protected_fields = [
-            p["field"] for p in analysis["protected_class_exposure"]
-        ]
+        protected_fields = [p["field"] for p in analysis["protected_class_exposure"]]
         assert "race" in protected_fields or any("race" in f.lower() for f in protected_fields)
 
     def test_analyze_proxy_variables(
@@ -79,16 +73,12 @@ class TestEmploymentCategoryProcessor:
         analysis = processor.analyze_feature(sample_video_interview_feature)
 
         # Should have findings about missing bias testing
-        missing_bias = [
-            f for f in analysis["findings"]
-            if f.get("type") == "missing_bias_testing"
-        ]
+        missing_bias = [f for f in analysis["findings"] if f.get("type") == "missing_bias_testing"]
         assert len(missing_bias) > 0
 
         # Should have findings about high-risk algorithm
         high_risk = [
-            f for f in analysis["findings"]
-            if f.get("type") == "high_risk_hiring_algorithm"
+            f for f in analysis["findings"] if f.get("type") == "high_risk_hiring_algorithm"
         ]
         assert len(high_risk) > 0
 
@@ -104,10 +94,7 @@ class TestEmploymentCategoryProcessor:
         assert analysis["risk_level"] in ["low", "medium"]
 
         # Should have no critical findings
-        critical_findings = [
-            f for f in analysis["findings"]
-            if f.get("severity") == "critical"
-        ]
+        critical_findings = [f for f in analysis["findings"] if f.get("severity") == "critical"]
         assert len(critical_findings) == 0
 
     def test_generate_recommendations(
@@ -252,9 +239,7 @@ class TestRiskLevelCalculation:
 
     def test_low_risk_level(self, processor: EmploymentCategoryProcessor):
         """Test low risk level assignment."""
-        analysis = {
-            "findings": []
-        }
+        analysis = {"findings": []}
 
         level = processor._calculate_risk_level(analysis)
         assert level == "low"

@@ -2,19 +2,18 @@
 Tests for the rule engine.
 """
 
-import pytest
 from pathlib import Path
 
+import pytest
+
+from wenah.core.types import (
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
+    RuleResult,
+)
 from wenah.rules.rule_engine import RuleEngine, get_rule_engine
 from wenah.rules.rule_loader import RuleLoader, RuleValidator
-from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    RuleResult,
-    DataFieldSpec,
-    AlgorithmSpec,
-)
 
 
 class TestRuleEngine:
@@ -42,8 +41,7 @@ class TestRuleEngine:
         # Should have some evaluations (positive indicators)
         # but no critical violations
         critical_violations = [
-            e for e in evaluations
-            if e.result == RuleResult.VIOLATION and e.risk_score >= 80
+            e for e in evaluations if e.result == RuleResult.VIOLATION and e.risk_score >= 80
         ]
         assert len(critical_violations) == 0
 
@@ -59,8 +57,9 @@ class TestRuleEngine:
         assert len(evaluations) > 0
 
         # Find the protected class violation
-        protected_class_evals = [
-            e for e in evaluations
+        [
+            e
+            for e in evaluations
             if "protected" in e.rule_name.lower() or "race" in str(e.law_references).lower()
         ]
 
@@ -77,8 +76,9 @@ class TestRuleEngine:
         evaluations = rule_engine.evaluate(sample_hiring_feature_with_proxy)
 
         # Should detect zip_code as potential proxy
-        proxy_evals = [
-            e for e in evaluations
+        [
+            e
+            for e in evaluations
             if "proxy" in e.rule_name.lower() or "zip" in str(e.recommendations).lower()
         ]
 
@@ -108,10 +108,12 @@ class TestRuleEngine:
         sample_compliant_feature: ProductFeatureInput,
     ):
         """Test evaluation of multiple features."""
-        results = rule_engine.evaluate_multiple([
-            sample_hiring_feature,
-            sample_compliant_feature,
-        ])
+        results = rule_engine.evaluate_multiple(
+            [
+                sample_hiring_feature,
+                sample_compliant_feature,
+            ]
+        )
 
         assert len(results) == 2
         assert sample_hiring_feature.feature_id in results
@@ -275,7 +277,8 @@ class TestRuleValidator:
 
         # Current rules should be valid (no critical issues)
         critical_issues = [
-            i for i in issues
+            i
+            for i in issues
             if i.get("type") in ["duplicate_id", "invalid_risk_score", "invalid_confidence"]
         ]
         assert len(critical_issues) == 0
@@ -314,19 +317,11 @@ class TestConditionEvaluation:
     def test_contains_any_operator(self, rule_engine: RuleEngine):
         """Test contains_any operator."""
         result, conf = rule_engine._compare(
-            "hello world",
-            "contains_any",
-            None,
-            ["world", "universe"]
+            "hello world", "contains_any", None, ["world", "universe"]
         )
         assert result is True
 
-        result, conf = rule_engine._compare(
-            ["a", "b", "c"],
-            "contains_any",
-            None,
-            ["b", "x"]
-        )
+        result, conf = rule_engine._compare(["a", "b", "c"], "contains_any", None, ["b", "x"])
         assert result is True
 
     def test_in_operator(self, rule_engine: RuleEngine):

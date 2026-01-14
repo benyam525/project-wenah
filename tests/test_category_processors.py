@@ -9,24 +9,23 @@ from __future__ import annotations
 import pytest
 
 from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
     DataFieldSpec,
-)
-from wenah.rules.categories.housing import (
-    HousingCategoryProcessor,
-    get_housing_processor,
-    FHA_PROTECTED_CLASSES,
-    HOUSING_PROXY_INDICATORS,
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
 )
 from wenah.rules.categories.consumer import (
+    CONSUMER_PROXY_INDICATORS,
+    ECOA_PROTECTED_CLASSES,
     ConsumerCategoryProcessor,
     get_consumer_processor,
-    ECOA_PROTECTED_CLASSES,
-    CONSUMER_PROXY_INDICATORS,
 )
-
+from wenah.rules.categories.housing import (
+    FHA_PROTECTED_CLASSES,
+    HOUSING_PROXY_INDICATORS,
+    HousingCategoryProcessor,
+    get_housing_processor,
+)
 
 # =============================================================================
 # Fixtures

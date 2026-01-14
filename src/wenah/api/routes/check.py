@@ -11,30 +11,28 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, status
 
 from wenah.api.schemas import (
+    APILaunchDecision,
+    APIRiskLevel,
+    ComplianceCheckItemResponse,
+    DocumentationRequirementResponse,
+    ErrorResponse,
+    FeatureCheckResponse,
     PrelaunchCheckRequest,
     PrelaunchCheckResponse,
     QuickPrelaunchRequest,
     QuickPrelaunchResponse,
-    FeatureCheckResponse,
-    ComplianceCheckItemResponse,
-    DocumentationRequirementResponse,
     ViolationResponse,
-    APIRiskLevel,
-    APILaunchDecision,
-    ErrorResponse,
 )
 from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
     AlgorithmSpec,
+    DataFieldSpec,
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
     RiskLevel,
 )
 from wenah.use_cases.prelaunch_check import (
-    PrelaunchChecker,
     LaunchDecision,
-    CheckStatus,
     get_prelaunch_checker,
 )
 
@@ -197,16 +195,18 @@ async def prelaunch_check(request: PrelaunchCheckRequest) -> PrelaunchCheckRespo
                 for ci in fr.check_items
             ]
 
-            feature_results.append(FeatureCheckResponse(
-                feature_id=fr.feature_id,
-                feature_name=fr.feature_name,
-                check_items=check_items,
-                passed_count=fr.passed_count,
-                failed_count=fr.failed_count,
-                warning_count=fr.warning_count,
-                overall_status=fr.overall_status.value,
-                blocking_issues=fr.blocking_issues,
-            ))
+            feature_results.append(
+                FeatureCheckResponse(
+                    feature_id=fr.feature_id,
+                    feature_name=fr.feature_name,
+                    check_items=check_items,
+                    passed_count=fr.passed_count,
+                    failed_count=fr.failed_count,
+                    warning_count=fr.warning_count,
+                    overall_status=fr.overall_status.value,
+                    blocking_issues=fr.blocking_issues,
+                )
+            )
 
         # Build documentation requirements
         doc_requirements = [
@@ -222,10 +222,7 @@ async def prelaunch_check(request: PrelaunchCheckRequest) -> PrelaunchCheckRespo
         ]
 
         # Build critical violations
-        critical_violations = [
-            _build_violation_response(v)
-            for v in result.critical_violations
-        ]
+        critical_violations = [_build_violation_response(v) for v in result.critical_violations]
 
         return PrelaunchCheckResponse(
             product_name=result.product_name,
@@ -356,7 +353,7 @@ async def get_documentation_requirements() -> dict[str, Any]:
             },
         ],
         "guidance": "All required documentation must be provided before launch. "
-                    "Documentation should be retained for at least 2 years per EEOC requirements.",
+        "Documentation should be retained for at least 2 years per EEOC requirements.",
     }
 
 
@@ -507,7 +504,7 @@ async def get_sign_off_requirements(risk_level: APIRiskLevel) -> dict[str, Any]:
         "risk_level": risk_level.value,
         "required_sign_offs": sign_offs.get(risk_level, ["Product Owner"]),
         "guidance": "All required sign-offs must be obtained before launch. "
-                    "Sign-offs should include acknowledgment of compliance review results.",
+        "Sign-offs should include acknowledgment of compliance review results.",
     }
 
 

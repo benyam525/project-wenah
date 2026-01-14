@@ -7,15 +7,15 @@ Defines Pydantic models for API validation and serialization.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # =============================================================================
 # Enums for API
 # =============================================================================
+
 
 class APIProductCategory(str, Enum):
     """Product categories for API."""
@@ -77,16 +77,23 @@ class APIDashboardView(str, Enum):
 # Request Models - Data Field
 # =============================================================================
 
+
 class DataFieldRequest(BaseModel):
     """Data field specification in API request."""
 
     name: str = Field(..., description="Field name", min_length=1, max_length=100)
     description: str = Field(default="", description="Field description", max_length=500)
-    data_type: str = Field(default="text", description="Data type (text, numeric, boolean, categorical)")
+    data_type: str = Field(
+        default="text", description="Data type (text, numeric, boolean, categorical)"
+    )
     source: str = Field(default="user_input", description="Data source")
     required: bool = Field(default=False, description="Whether field is required")
-    used_in_decisions: bool = Field(default=False, description="Whether used in automated decisions")
-    potential_proxy: str | None = Field(default=None, description="Protected class this may proxy for")
+    used_in_decisions: bool = Field(
+        default=False, description="Whether used in automated decisions"
+    )
+    potential_proxy: str | None = Field(
+        default=None, description="Protected class this may proxy for"
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -108,20 +115,31 @@ class AlgorithmRequest(BaseModel):
 # Request Models - Feature
 # =============================================================================
 
+
 class FeatureRequest(BaseModel):
     """Feature specification in API request."""
 
-    feature_id: str = Field(..., description="Unique feature identifier", min_length=1, max_length=100)
+    feature_id: str = Field(
+        ..., description="Unique feature identifier", min_length=1, max_length=100
+    )
     name: str = Field(..., description="Feature name", min_length=1, max_length=200)
     description: str = Field(..., description="Feature description", min_length=10, max_length=2000)
     category: APIProductCategory = Field(..., description="Product category")
     feature_type: APIFeatureType = Field(..., description="Type of feature")
-    data_fields: list[DataFieldRequest] = Field(default_factory=list, description="Data fields used")
+    data_fields: list[DataFieldRequest] = Field(
+        default_factory=list, description="Data fields used"
+    )
     algorithm: AlgorithmRequest | None = Field(default=None, description="Algorithm specification")
-    decision_impact: str = Field(..., description="How this affects decisions", min_length=5, max_length=500)
-    affected_population: str = Field(..., description="Who is affected", min_length=3, max_length=200)
+    decision_impact: str = Field(
+        ..., description="How this affects decisions", min_length=5, max_length=500
+    )
+    affected_population: str = Field(
+        ..., description="Who is affected", min_length=3, max_length=200
+    )
     company_size: int | None = Field(default=None, ge=1, description="Company size (employees)")
-    additional_context: str | None = Field(default=None, description="Additional context", max_length=2000)
+    additional_context: str | None = Field(
+        default=None, description="Additional context", max_length=2000
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -130,13 +148,18 @@ class FeatureRequest(BaseModel):
 # Request Models - Assessment
 # =============================================================================
 
+
 class RiskAssessmentRequest(BaseModel):
     """Request for risk assessment."""
 
     product_name: str = Field(..., description="Product name", min_length=1, max_length=200)
-    features: list[FeatureRequest] = Field(..., description="Features to assess", min_length=1, max_length=50)
+    features: list[FeatureRequest] = Field(
+        ..., description="Features to assess", min_length=1, max_length=50
+    )
     include_llm_analysis: bool = Field(default=True, description="Include LLM-powered analysis")
-    view_type: APIDashboardView = Field(default=APIDashboardView.DETAILED, description="Dashboard view type")
+    view_type: APIDashboardView = Field(
+        default=APIDashboardView.DETAILED, description="Dashboard view type"
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -144,7 +167,9 @@ class RiskAssessmentRequest(BaseModel):
 class QuickAssessmentRequest(BaseModel):
     """Request for quick assessment (rules only)."""
 
-    features: list[FeatureRequest] = Field(..., description="Features to assess", min_length=1, max_length=50)
+    features: list[FeatureRequest] = Field(
+        ..., description="Features to assess", min_length=1, max_length=50
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -154,7 +179,9 @@ class TextAssessmentRequest(BaseModel):
 
     name: str = Field(..., description="Feature name", min_length=1, max_length=200)
     category: APIProductCategory = Field(..., description="Product category")
-    description: str = Field(..., description="Free-text feature description", min_length=10, max_length=5000)
+    description: str = Field(
+        ..., description="Free-text feature description", min_length=10, max_length=5000
+    )
     include_llm_analysis: bool = Field(default=True, description="Include LLM-powered analysis")
 
     model_config = {"extra": "ignore"}
@@ -165,7 +192,9 @@ class FeatureAssessmentRequest(BaseModel):
 
     feature: FeatureRequest = Field(..., description="Feature to assess")
     include_llm_analysis: bool = Field(default=True, description="Include LLM-powered analysis")
-    view_type: APIDashboardView = Field(default=APIDashboardView.DETAILED, description="Dashboard view type")
+    view_type: APIDashboardView = Field(
+        default=APIDashboardView.DETAILED, description="Dashboard view type"
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -174,12 +203,17 @@ class FeatureAssessmentRequest(BaseModel):
 # Request Models - Design Guidance
 # =============================================================================
 
+
 class DesignGuidanceRequest(BaseModel):
     """Request for design guidance."""
 
     product_name: str = Field(..., description="Product name", min_length=1, max_length=200)
-    features: list[FeatureRequest] = Field(..., description="Features to get guidance for", min_length=1, max_length=50)
-    guidance_level: APIGuidanceLevel = Field(default=APIGuidanceLevel.STANDARD, description="Level of detail")
+    features: list[FeatureRequest] = Field(
+        ..., description="Features to get guidance for", min_length=1, max_length=50
+    )
+    guidance_level: APIGuidanceLevel = Field(
+        default=APIGuidanceLevel.STANDARD, description="Level of detail"
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -189,7 +223,9 @@ class DataFieldCheckRequest(BaseModel):
 
     field_name: str = Field(..., description="Field name to check", min_length=1, max_length=100)
     field_description: str = Field(default="", description="Field description", max_length=500)
-    category: APIProductCategory = Field(default=APIProductCategory.HIRING, description="Product category")
+    category: APIProductCategory = Field(
+        default=APIProductCategory.HIRING, description="Product category"
+    )
     used_in_decisions: bool = Field(default=True, description="Whether used in decisions")
 
     model_config = {"extra": "ignore"}
@@ -199,7 +235,9 @@ class AlgorithmCheckRequest(BaseModel):
     """Request to check an algorithm design."""
 
     algorithm: AlgorithmRequest = Field(..., description="Algorithm to check")
-    category: APIProductCategory = Field(default=APIProductCategory.HIRING, description="Product category")
+    category: APIProductCategory = Field(
+        default=APIProductCategory.HIRING, description="Product category"
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -208,13 +246,20 @@ class AlgorithmCheckRequest(BaseModel):
 # Request Models - Pre-launch Check
 # =============================================================================
 
+
 class PrelaunchCheckRequest(BaseModel):
     """Request for pre-launch compliance check."""
 
     product_name: str = Field(..., description="Product name", min_length=1, max_length=200)
-    features: list[FeatureRequest] = Field(..., description="Features to check", min_length=1, max_length=50)
-    documentation_status: dict[str, bool] = Field(default_factory=dict, description="Documentation requirement status")
-    evidence: dict[str, Any] = Field(default_factory=dict, description="Evidence for compliance checks")
+    features: list[FeatureRequest] = Field(
+        ..., description="Features to check", min_length=1, max_length=50
+    )
+    documentation_status: dict[str, bool] = Field(
+        default_factory=dict, description="Documentation requirement status"
+    )
+    evidence: dict[str, Any] = Field(
+        default_factory=dict, description="Evidence for compliance checks"
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -222,7 +267,9 @@ class PrelaunchCheckRequest(BaseModel):
 class QuickPrelaunchRequest(BaseModel):
     """Request for quick pre-launch check."""
 
-    features: list[FeatureRequest] = Field(..., description="Features to check", min_length=1, max_length=50)
+    features: list[FeatureRequest] = Field(
+        ..., description="Features to check", min_length=1, max_length=50
+    )
 
     model_config = {"extra": "ignore"}
 
@@ -230,6 +277,7 @@ class QuickPrelaunchRequest(BaseModel):
 # =============================================================================
 # Response Models - Common
 # =============================================================================
+
 
 class ViolationResponse(BaseModel):
     """Violation detail in response."""
@@ -282,6 +330,7 @@ class FeatureAssessmentResponse(BaseModel):
 # =============================================================================
 # Response Models - Risk Assessment
 # =============================================================================
+
 
 class RiskAssessmentResponse(BaseModel):
     """Full risk assessment response."""
@@ -357,6 +406,7 @@ class TextAssessmentResponse(BaseModel):
 # Response Models - Design Guidance
 # =============================================================================
 
+
 class DataFieldGuidanceResponse(BaseModel):
     """Guidance for a data field."""
 
@@ -415,6 +465,7 @@ class DesignGuidanceResponse(BaseModel):
 # =============================================================================
 # Response Models - Pre-launch Check
 # =============================================================================
+
 
 class ComplianceCheckItemResponse(BaseModel):
     """Individual compliance check result."""
@@ -491,6 +542,7 @@ class QuickPrelaunchResponse(BaseModel):
 # Response Models - Health & Info
 # =============================================================================
 
+
 class HealthResponse(BaseModel):
     """Health check response."""
 
@@ -557,6 +609,7 @@ class APIInfoResponse(BaseModel):
 # =============================================================================
 # Error Response
 # =============================================================================
+
 
 class ErrorResponse(BaseModel):
     """Standard error response."""

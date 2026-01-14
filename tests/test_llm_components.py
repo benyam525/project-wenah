@@ -5,31 +5,29 @@ Note: These tests mock the Claude API to avoid actual API calls.
 Integration tests with real API calls should be run separately.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from typing import Any
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
+from wenah.core.types import ProductFeatureInput, RAGResponse
 from wenah.llm.claude_client import (
+    AnalysisType,
     ClaudeClient,
     ClaudeResponse,
     ComplianceAnalyzer,
-    AnalysisType,
-)
-from wenah.llm.prompts import (
-    build_risk_analysis_prompt,
-    build_disparate_impact_prompt,
-    build_proxy_variable_prompt,
-    format_context_documents,
-    format_data_fields,
-    SYSTEM_PROMPT_BASE,
 )
 from wenah.llm.guardrails import (
     HallucinationGuardrails,
     ResponseValidator,
-    GuardrailCheck,
+)
+from wenah.llm.prompts import (
+    SYSTEM_PROMPT_BASE,
+    build_disparate_impact_prompt,
+    build_risk_analysis_prompt,
+    format_context_documents,
+    format_data_fields,
 )
 from wenah.llm.rag_pipeline import RAGPipeline, RetrievalResult
-from wenah.core.types import RAGResponse, ProductFeatureInput
 
 
 class TestClaudeClient:
@@ -269,19 +267,23 @@ class TestHallucinationGuardrails:
 
     def test_verify_citations_valid(self, guardrails):
         """Test citation verification with valid citations."""
-        check = guardrails._verify_citations([
-            "Title VII",
-            "42 U.S.C. § 2000e",
-        ])
+        check = guardrails._verify_citations(
+            [
+                "Title VII",
+                "42 U.S.C. § 2000e",
+            ]
+        )
 
         assert check.passed is True
 
     def test_verify_citations_invalid(self, guardrails):
         """Test citation verification with invalid citations."""
-        check = guardrails._verify_citations([
-            "Made Up Law Act of 2099",
-            "Fictional Case v. Imaginary Corp",
-        ])
+        check = guardrails._verify_citations(
+            [
+                "Made Up Law Act of 2099",
+                "Fictional Case v. Imaginary Corp",
+            ]
+        )
 
         assert check.passed is False
         assert check.severity == "critical"
@@ -381,16 +383,22 @@ class TestHallucinationGuardrails:
         corpus = "title vii prohibits employment discrimination based on race color religion sex national origin"
 
         # Grounded claim
-        assert guardrails._is_claim_grounded(
-            "Title VII prohibits race discrimination",
-            corpus,
-        ) is True
+        assert (
+            guardrails._is_claim_grounded(
+                "Title VII prohibits race discrimination",
+                corpus,
+            )
+            is True
+        )
 
         # Ungrounded claim
-        assert guardrails._is_claim_grounded(
-            "The GDPR requires data protection compliance",
-            corpus,
-        ) is False
+        assert (
+            guardrails._is_claim_grounded(
+                "The GDPR requires data protection compliance",
+                corpus,
+            )
+            is False
+        )
 
 
 class TestResponseValidator:

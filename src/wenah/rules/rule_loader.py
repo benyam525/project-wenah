@@ -6,6 +6,7 @@ Handles loading, validation, and management of compliance rules from YAML files.
 
 from pathlib import Path
 from typing import Any
+
 import yaml
 
 from wenah.config import settings
@@ -169,7 +170,7 @@ class RuleLoader:
             Parsed YAML data or None if error
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return yaml.safe_load(f)
         except (yaml.YAMLError, OSError) as e:
             print(f"Error loading rule file {file_path}: {e}")
@@ -369,11 +370,13 @@ class RuleValidator:
             rule_ids = [r.get("id") for r in rules]
             duplicates = [rid for rid in rule_ids if rule_ids.count(rid) > 1]
             if duplicates:
-                issues.append({
-                    "type": "duplicate_id",
-                    "tree_id": tree_id,
-                    "rule_ids": list(set(duplicates)),
-                })
+                issues.append(
+                    {
+                        "type": "duplicate_id",
+                        "tree_id": tree_id,
+                        "rule_ids": list(set(duplicates)),
+                    }
+                )
 
             # Validate each rule
             for rule in rules:
@@ -394,40 +397,48 @@ class RuleValidator:
         # Check risk score range
         risk_score = rule.get("consequence", {}).get("risk_score", 0)
         if not -100 <= risk_score <= 100:
-            issues.append({
-                "type": "invalid_risk_score",
-                "tree_id": tree_id,
-                "rule_id": rule_id,
-                "value": risk_score,
-            })
+            issues.append(
+                {
+                    "type": "invalid_risk_score",
+                    "tree_id": tree_id,
+                    "rule_id": rule_id,
+                    "value": risk_score,
+                }
+            )
 
         # Check confidence range
         confidence = rule.get("confidence", 1.0)
         if not 0 <= confidence <= 1:
-            issues.append({
-                "type": "invalid_confidence",
-                "tree_id": tree_id,
-                "rule_id": rule_id,
-                "value": confidence,
-            })
+            issues.append(
+                {
+                    "type": "invalid_confidence",
+                    "tree_id": tree_id,
+                    "rule_id": rule_id,
+                    "value": confidence,
+                }
+            )
 
         # Check for empty conditions
         conditions = rule.get("conditions", {})
         if not conditions.get("items"):
-            issues.append({
-                "type": "empty_conditions",
-                "tree_id": tree_id,
-                "rule_id": rule_id,
-            })
+            issues.append(
+                {
+                    "type": "empty_conditions",
+                    "tree_id": tree_id,
+                    "rule_id": rule_id,
+                }
+            )
 
         # Check for missing recommendation
         recommendation = rule.get("consequence", {}).get("recommendation", "")
         if not recommendation.strip():
-            issues.append({
-                "type": "missing_recommendation",
-                "tree_id": tree_id,
-                "rule_id": rule_id,
-            })
+            issues.append(
+                {
+                    "type": "missing_recommendation",
+                    "tree_id": tree_id,
+                    "rule_id": rule_id,
+                }
+            )
 
         return issues
 
@@ -453,19 +464,21 @@ class RuleValidator:
         # Check for rules with similar conditions but different outcomes
         for category, rules in rules_by_category.items():
             for i, rule1 in enumerate(rules):
-                for rule2 in rules[i + 1:]:
+                for rule2 in rules[i + 1 :]:
                     if self._conditions_overlap(rule1, rule2):
                         v1 = rule1.get("consequence", {}).get("violation")
                         v2 = rule2.get("consequence", {}).get("violation")
                         if v1 != v2:
-                            conflicts.append({
-                                "type": "conflicting_outcomes",
-                                "category": category,
-                                "rule1_id": rule1.get("id"),
-                                "rule2_id": rule2.get("id"),
-                                "rule1_violation": v1,
-                                "rule2_violation": v2,
-                            })
+                            conflicts.append(
+                                {
+                                    "type": "conflicting_outcomes",
+                                    "category": category,
+                                    "rule1_id": rule1.get("id"),
+                                    "rule2_id": rule2.get("id"),
+                                    "rule1_violation": v1,
+                                    "rule2_violation": v2,
+                                }
+                            )
 
         return conflicts
 

@@ -8,19 +8,19 @@ compliance requirements are met and documented.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
 
+from wenah.core.engine import (
+    AssessmentConfig,
+    ComplianceEngine,
+    get_compliance_engine,
+)
 from wenah.core.types import (
     ProductFeatureInput,
     RiskLevel,
     ViolationDetail,
-)
-from wenah.core.engine import (
-    ComplianceEngine,
-    AssessmentConfig,
-    get_compliance_engine,
 )
 from wenah.use_cases.design_guidance import (
     DesignGuidanceEngine,
@@ -369,9 +369,7 @@ class PrelaunchChecker:
         launch_conditions = self._generate_launch_conditions(
             launch_decision, feature_results, assessment
         )
-        pre_launch_actions = self._generate_pre_launch_actions(
-            feature_results, doc_requirements
-        )
+        pre_launch_actions = self._generate_pre_launch_actions(feature_results, doc_requirements)
         monitoring_requirements = self._generate_monitoring_requirements(features)
 
         # Sign-off requirements
@@ -379,7 +377,7 @@ class PrelaunchChecker:
 
         return PrelaunchCheckResponse(
             product_name=product_name,
-            check_timestamp=datetime.now(timezone.utc),
+            check_timestamp=datetime.now(UTC),
             check_version="1.0.0",
             launch_decision=launch_decision,
             decision_rationale=rationale,
@@ -424,16 +422,15 @@ class PrelaunchChecker:
                     )
 
                 if df.potential_proxy and df.used_in_decisions:
-                    warnings.append(
-                        f"Proxy variable '{df.name}' needs disparate impact review"
-                    )
+                    warnings.append(f"Proxy variable '{df.name}' needs disparate impact review")
 
             # Check algorithm
             if feature.algorithm:
-                if feature.algorithm.type in ["ml_model", "llm"] and not feature.algorithm.bias_testing_done:
-                    blocking_issues.append(
-                        f"AI algorithm in {feature.name} requires bias testing"
-                    )
+                if (
+                    feature.algorithm.type in ["ml_model", "llm"]
+                    and not feature.algorithm.bias_testing_done
+                ):
+                    blocking_issues.append(f"AI algorithm in {feature.name} requires bias testing")
 
         can_launch = len(blocking_issues) == 0
 
@@ -455,9 +452,7 @@ class PrelaunchChecker:
 
         # Data collection checks
         for check_def in self.STANDARD_CHECKS["data_collection"]:
-            status, details, remediation = self._evaluate_data_check(
-                check_def, feature, evidence
-            )
+            status, details, remediation = self._evaluate_data_check(check_def, feature, evidence)
             item = ComplianceCheckItem(
                 check_id=check_def["check_id"],
                 category="Data Collection",
@@ -516,9 +511,7 @@ class PrelaunchChecker:
 
         # Documentation checks
         for check_def in self.STANDARD_CHECKS["documentation"]:
-            status, details, remediation = self._evaluate_doc_check(
-                check_def, feature, evidence
-            )
+            status, details, remediation = self._evaluate_doc_check(check_def, feature, evidence)
             item = ComplianceCheckItem(
                 check_id=check_def["check_id"],
                 category="Documentation",
@@ -571,7 +564,8 @@ class PrelaunchChecker:
         if check_id == "dc-001":
             # Check for protected class in decisions
             protected_in_decisions = [
-                df.name for df in feature.data_fields
+                df.name
+                for df in feature.data_fields
                 if self._is_protected_class(df.name) and df.used_in_decisions
             ]
 
@@ -699,7 +693,8 @@ class PrelaunchChecker:
         elif check_id == "al-004":
             # ADA accommodation
             risky_inputs = [
-                inp for inp in algo.inputs
+                inp
+                for inp in algo.inputs
                 if any(r in inp.lower() for r in ["video", "voice", "facial", "speech"])
             ]
 
@@ -735,10 +730,7 @@ class PrelaunchChecker:
 
         if check_id == "pr-001":
             # Human oversight
-            has_human = (
-                feature.additional_context and
-                "human" in feature.additional_context.lower()
-            )
+            has_human = feature.additional_context and "human" in feature.additional_context.lower()
             evidence_key = f"human_oversight_{feature.feature_id}"
 
             if has_human or evidence.get(evidence_key):
@@ -849,14 +841,16 @@ class PrelaunchChecker:
 
         for req_def in self.DOCUMENTATION_REQUIREMENTS:
             provided = documentation_status.get(req_def["requirement_id"], False)
-            requirements.append(DocumentationRequirement(
-                requirement_id=req_def["requirement_id"],
-                name=req_def["name"],
-                description=req_def["description"],
-                required=req_def["required"],
-                provided=provided,
-                law_reference=req_def["law_reference"],
-            ))
+            requirements.append(
+                DocumentationRequirement(
+                    requirement_id=req_def["requirement_id"],
+                    name=req_def["name"],
+                    description=req_def["description"],
+                    required=req_def["required"],
+                    provided=provided,
+                    law_reference=req_def["law_reference"],
+                )
+            )
 
         return requirements
 
@@ -879,40 +873,40 @@ class PrelaunchChecker:
             return (
                 LaunchDecision.BLOCKED,
                 f"Launch blocked due to {total_blocking} blocking issue(s). "
-                f"Critical compliance violations must be resolved before launch."
+                f"Critical compliance violations must be resolved before launch.",
             )
 
         if not doc_complete:
             return (
                 LaunchDecision.BLOCKED,
                 "Required documentation incomplete. "
-                "All required documentation must be provided before launch."
+                "All required documentation must be provided before launch.",
             )
 
         if total_failed > 0:
             return (
                 LaunchDecision.NEEDS_REVIEW,
                 f"{total_failed} check(s) failed. "
-                f"Human review required to determine if launch can proceed."
+                f"Human review required to determine if launch can proceed.",
             )
 
         if assessment.overall_risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
             return (
                 LaunchDecision.CONDITIONAL,
                 f"Risk level is {assessment.overall_risk_level.value}. "
-                f"Launch approved with enhanced monitoring and conditions."
+                f"Launch approved with enhanced monitoring and conditions.",
             )
 
         if assessment.requires_human_review:
             return (
                 LaunchDecision.CONDITIONAL,
                 "Human review was recommended during assessment. "
-                "Launch approved with conditions pending review confirmation."
+                "Launch approved with conditions pending review confirmation.",
             )
 
         return (
             LaunchDecision.APPROVED,
-            "All compliance checks passed. Product approved for launch."
+            "All compliance checks passed. Product approved for launch.",
         )
 
     def _generate_launch_conditions(
@@ -928,19 +922,12 @@ class PrelaunchChecker:
             return conditions
 
         # Add monitoring conditions
-        conditions.append(
-            "Monitor disparate impact ratios weekly for first 90 days"
-        )
-        conditions.append(
-            "Report any adverse impact ratio > 0.8 to compliance team"
-        )
+        conditions.append("Monitor disparate impact ratios weekly for first 90 days")
+        conditions.append("Report any adverse impact ratio > 0.8 to compliance team")
 
         # Add feature-specific conditions
         for result in feature_results:
-            warning_items = [
-                c for c in result.check_items
-                if c.status == CheckStatus.WARNING
-            ]
+            warning_items = [c for c in result.check_items if c.status == CheckStatus.WARNING]
             for item in warning_items[:2]:
                 if item.remediation:
                     conditions.append(item.remediation)
@@ -983,9 +970,7 @@ class PrelaunchChecker:
         # Add feature-specific monitoring
         for feature in features:
             if feature.algorithm and feature.algorithm.type in ["ml_model", "llm"]:
-                requirements.append(
-                    f"Monitor algorithm drift for {feature.name}"
-                )
+                requirements.append(f"Monitor algorithm drift for {feature.name}")
 
         return requirements
 
@@ -994,10 +979,12 @@ class PrelaunchChecker:
         sign_offs = ["Product Owner"]
 
         if assessment.overall_risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
-            sign_offs.extend([
-                "Legal Counsel",
-                "Chief Compliance Officer",
-            ])
+            sign_offs.extend(
+                [
+                    "Legal Counsel",
+                    "Chief Compliance Officer",
+                ]
+            )
         elif assessment.overall_risk_level == RiskLevel.MEDIUM:
             sign_offs.append("Compliance Team")
 
@@ -1009,8 +996,17 @@ class PrelaunchChecker:
     def _is_protected_class(self, field_name: str) -> bool:
         """Check if field name indicates protected class data."""
         protected = {
-            "race", "color", "religion", "sex", "gender", "national_origin",
-            "age", "disability", "genetic", "pregnancy", "veteran",
+            "race",
+            "color",
+            "religion",
+            "sex",
+            "gender",
+            "national_origin",
+            "age",
+            "disability",
+            "genetic",
+            "pregnancy",
+            "veteran",
         }
         field_lower = field_name.lower()
         return any(p in field_lower for p in protected)

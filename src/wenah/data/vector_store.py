@@ -14,6 +14,7 @@ from wenah.config import settings
 try:
     import chromadb
     from chromadb.config import Settings as ChromaSettings
+
     CHROMADB_AVAILABLE = True
 except ImportError:
     chromadb = None
@@ -44,14 +45,9 @@ class VectorStore:
                             Defaults to config setting.
         """
         if not CHROMADB_AVAILABLE:
-            raise ImportError(
-                "chromadb is not installed. "
-                "Install with: pip install chromadb"
-            )
+            raise ImportError("chromadb is not installed. Install with: pip install chromadb")
 
-        self.persist_directory = Path(
-            persist_directory or settings.chroma_persist_directory
-        )
+        self.persist_directory = Path(persist_directory or settings.chroma_persist_directory)
         self.collection_name = collection_name or settings.chroma_collection_name
 
         # Ensure directory exists
@@ -317,11 +313,13 @@ class VectorStore:
 
         documents = []
         for i, doc_id in enumerate(results.get("ids", [])):
-            documents.append({
-                "id": doc_id,
-                "document": results["documents"][i] if results["documents"] else None,
-                "metadata": results["metadatas"][i] if results["metadatas"] else None,
-            })
+            documents.append(
+                {
+                    "id": doc_id,
+                    "document": results["documents"][i] if results["documents"] else None,
+                    "metadata": results["metadatas"][i] if results["metadatas"] else None,
+                }
+            )
 
         return documents
 

@@ -8,25 +8,21 @@ helping teams make compliant choices before implementation.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
 
-from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
-    AlgorithmSpec,
-    RiskLevel,
-)
 from wenah.core.engine import (
     ComplianceEngine,
-    AssessmentConfig,
     get_compliance_engine,
 )
+from wenah.core.types import (
+    AlgorithmSpec,
+    ProductCategory,
+    ProductFeatureInput,
+    RiskLevel,
+)
 from wenah.rules.categories.employment import (
-    EmploymentCategoryProcessor,
     get_employment_processor,
 )
 
@@ -122,10 +118,22 @@ class DesignGuidanceEngine:
 
     # Protected class identifiers
     PROTECTED_CLASSES = {
-        "race", "color", "religion", "sex", "gender", "national_origin",
-        "age", "disability", "genetic_information", "pregnancy",
-        "sexual_orientation", "gender_identity", "veteran_status",
-        "citizenship", "marital_status", "familial_status",
+        "race",
+        "color",
+        "religion",
+        "sex",
+        "gender",
+        "national_origin",
+        "age",
+        "disability",
+        "genetic_information",
+        "pregnancy",
+        "sexual_orientation",
+        "gender_identity",
+        "veteran_status",
+        "citizenship",
+        "marital_status",
+        "familial_status",
     }
 
     # Known proxy variables and what they proxy for
@@ -157,8 +165,16 @@ class DesignGuidanceEngine:
 
     # Risky algorithm inputs
     RISKY_ALGORITHM_INPUTS = {
-        "video", "facial", "voice", "speech", "image", "photo",
-        "personality", "emotion", "sentiment", "body_language",
+        "video",
+        "facial",
+        "voice",
+        "speech",
+        "image",
+        "photo",
+        "personality",
+        "emotion",
+        "sentiment",
+        "body_language",
     }
 
     def __init__(
@@ -200,18 +216,18 @@ class DesignGuidanceEngine:
             feature_guidance.append(guidance)
 
             # Track highest risk
-            if self._risk_level_to_score(guidance.overall_risk) > self._risk_level_to_score(overall_max_risk):
+            if self._risk_level_to_score(guidance.overall_risk) > self._risk_level_to_score(
+                overall_max_risk
+            ):
                 overall_max_risk = guidance.overall_risk
 
             # Collect critical warnings
             if guidance.design_choice == DesignChoice.AVOID:
-                critical_warnings.append(
-                    f"Feature '{feature.name}': {guidance.summary}"
-                )
+                critical_warnings.append(f"Feature '{feature.name}': {guidance.summary}")
 
         return DesignGuidanceResponse(
             product_name=product_name,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             guidance_level=level,
             feature_guidance=feature_guidance,
             overall_design_risk=overall_max_risk,
@@ -243,10 +259,7 @@ class DesignGuidanceEngine:
         desc_lower = field_description.lower()
 
         # Check if protected class
-        is_protected = any(
-            pc in field_lower or pc in desc_lower
-            for pc in self.PROTECTED_CLASSES
-        )
+        is_protected = any(pc in field_lower or pc in desc_lower for pc in self.PROTECTED_CLASSES)
 
         # Check if proxy variable
         is_proxy = False
@@ -265,7 +278,10 @@ class DesignGuidanceEngine:
                 risk_level=RiskLevel.CRITICAL,
                 design_choice=DesignChoice.AVOID,
                 guidance=f"Direct use of protected class '{field_name}' in decisions is prohibited under federal civil rights laws.",
-                alternatives=["Remove from decision inputs", "Use only for EEO reporting (collected separately)"],
+                alternatives=[
+                    "Remove from decision inputs",
+                    "Use only for EEO reporting (collected separately)",
+                ],
                 legal_references=["Title VII", "ADA", "ADEA"],
                 is_protected_class=True,
                 is_proxy_variable=False,
@@ -371,17 +387,21 @@ class DesignGuidanceEngine:
         # Build requirements
         requirements = []
         if algorithm.type in ["ml_model", "llm", "neural_network"]:
-            requirements.extend([
-                "Conduct disparate impact analysis before deployment",
-                "Document training data composition and potential biases",
-                "Implement ongoing bias monitoring",
-                "Provide accommodation mechanism for disabled candidates",
-            ])
+            requirements.extend(
+                [
+                    "Conduct disparate impact analysis before deployment",
+                    "Document training data composition and potential biases",
+                    "Implement ongoing bias monitoring",
+                    "Provide accommodation mechanism for disabled candidates",
+                ]
+            )
         if risky_inputs:
-            requirements.extend([
-                "Ensure alternative assessment methods for candidates who cannot participate",
-                "Document ADA accommodation procedures",
-            ])
+            requirements.extend(
+                [
+                    "Ensure alternative assessment methods for candidates who cannot participate",
+                    "Document ADA accommodation procedures",
+                ]
+            )
 
         # Best practices
         best_practices = [
@@ -425,75 +445,93 @@ class DesignGuidanceEngine:
         checklist = []
 
         # Data collection items
-        checklist.append({
-            "category": "Data Collection",
-            "item": "No protected class data used in decision-making",
-            "required": True,
-            "law": "Title VII, ADA",
-        })
+        checklist.append(
+            {
+                "category": "Data Collection",
+                "item": "No protected class data used in decision-making",
+                "required": True,
+                "law": "Title VII, ADA",
+            }
+        )
 
         if any(df.potential_proxy for df in feature.data_fields):
-            checklist.append({
-                "category": "Data Collection",
-                "item": "Proxy variables analyzed for disparate impact",
-                "required": True,
-                "law": "Title VII",
-            })
+            checklist.append(
+                {
+                    "category": "Data Collection",
+                    "item": "Proxy variables analyzed for disparate impact",
+                    "required": True,
+                    "law": "Title VII",
+                }
+            )
 
         # Algorithm items
         if feature.algorithm:
-            checklist.append({
-                "category": "Algorithm",
-                "item": "Bias testing completed",
-                "required": True,
-                "law": "Title VII, EEOC Guidance",
-            })
+            checklist.append(
+                {
+                    "category": "Algorithm",
+                    "item": "Bias testing completed",
+                    "required": True,
+                    "law": "Title VII, EEOC Guidance",
+                }
+            )
 
             if feature.algorithm.type in ["ml_model", "llm"]:
-                checklist.append({
-                    "category": "Algorithm",
-                    "item": "Training data reviewed for historical bias",
-                    "required": True,
-                    "law": "Title VII",
-                })
+                checklist.append(
+                    {
+                        "category": "Algorithm",
+                        "item": "Training data reviewed for historical bias",
+                        "required": True,
+                        "law": "Title VII",
+                    }
+                )
 
-                checklist.append({
-                    "category": "Algorithm",
-                    "item": "Disparate impact ratios documented",
-                    "required": True,
-                    "law": "EEOC Guidelines",
-                })
+                checklist.append(
+                    {
+                        "category": "Algorithm",
+                        "item": "Disparate impact ratios documented",
+                        "required": True,
+                        "law": "EEOC Guidelines",
+                    }
+                )
 
             for input_field in feature.algorithm.inputs:
                 if any(r in input_field.lower() for r in self.RISKY_ALGORITHM_INPUTS):
-                    checklist.append({
-                        "category": "Algorithm",
-                        "item": f"ADA accommodation process for {input_field} analysis",
-                        "required": True,
-                        "law": "ADA",
-                    })
+                    checklist.append(
+                        {
+                            "category": "Algorithm",
+                            "item": f"ADA accommodation process for {input_field} analysis",
+                            "required": True,
+                            "law": "ADA",
+                        }
+                    )
 
         # Process items
-        checklist.append({
-            "category": "Process",
-            "item": "Human review process for adverse decisions",
-            "required": feature.category == ProductCategory.HIRING,
-            "law": "Best Practice",
-        })
+        checklist.append(
+            {
+                "category": "Process",
+                "item": "Human review process for adverse decisions",
+                "required": feature.category == ProductCategory.HIRING,
+                "law": "Best Practice",
+            }
+        )
 
-        checklist.append({
-            "category": "Process",
-            "item": "Appeals mechanism documented",
-            "required": False,
-            "law": "Best Practice",
-        })
+        checklist.append(
+            {
+                "category": "Process",
+                "item": "Appeals mechanism documented",
+                "required": False,
+                "law": "Best Practice",
+            }
+        )
 
-        checklist.append({
-            "category": "Documentation",
-            "item": "Job-relatedness documented for all criteria",
-            "required": True,
-            "law": "Title VII, Uniform Guidelines",
-        })
+        checklist.append(
+            {
+                "category": "Documentation",
+                "item": "Job-relatedness documented for all criteria",
+                "required": True,
+                "law": "Title VII, Uniform Guidelines",
+            }
+        )
 
         return checklist
 
@@ -524,8 +562,7 @@ class DesignGuidanceEngine:
 
         # Determine overall risk
         max_field_risk = max(
-            (self._risk_level_to_score(fg.risk_level) for fg in field_guidance),
-            default=0
+            (self._risk_level_to_score(fg.risk_level) for fg in field_guidance), default=0
         )
         algo_risk = self._risk_level_to_score(algo_guidance.risk_level) if algo_guidance else 0
         overall_risk_score = max(max_field_risk, algo_risk)
@@ -534,10 +571,14 @@ class DesignGuidanceEngine:
         # Determine design choice
         if overall_risk == RiskLevel.CRITICAL:
             design_choice = DesignChoice.AVOID
-            summary = "Critical compliance issues detected. Design changes required before proceeding."
+            summary = (
+                "Critical compliance issues detected. Design changes required before proceeding."
+            )
         elif overall_risk == RiskLevel.HIGH:
             design_choice = DesignChoice.REQUIRES_REVIEW
-            summary = "Significant compliance concerns. Expert review recommended before proceeding."
+            summary = (
+                "Significant compliance concerns. Expert review recommended before proceeding."
+            )
         elif overall_risk == RiskLevel.MEDIUM:
             design_choice = DesignChoice.CAUTION
             summary = "Moderate compliance considerations. Proceed with documented safeguards."
@@ -604,7 +645,9 @@ class DesignGuidanceEngine:
         laws = []
 
         if feature.category == ProductCategory.HIRING:
-            laws.extend(["Title VII of the Civil Rights Act", "Americans with Disabilities Act (ADA)"])
+            laws.extend(
+                ["Title VII of the Civil Rights Act", "Americans with Disabilities Act (ADA)"]
+            )
             if feature.company_size and feature.company_size >= 20:
                 laws.append("Age Discrimination in Employment Act (ADEA)")
         elif feature.category == ProductCategory.LENDING:
@@ -641,23 +684,29 @@ class DesignGuidanceEngine:
         steps = []
 
         if overall_risk == RiskLevel.CRITICAL:
-            steps.extend([
-                "Address critical design issues before proceeding",
-                "Consult with legal counsel on compliance requirements",
-                "Remove or redesign high-risk features",
-            ])
+            steps.extend(
+                [
+                    "Address critical design issues before proceeding",
+                    "Consult with legal counsel on compliance requirements",
+                    "Remove or redesign high-risk features",
+                ]
+            )
         elif overall_risk == RiskLevel.HIGH:
-            steps.extend([
-                "Conduct detailed compliance review with legal team",
-                "Document business necessity for all criteria",
-                "Plan for bias testing before deployment",
-            ])
+            steps.extend(
+                [
+                    "Conduct detailed compliance review with legal team",
+                    "Document business necessity for all criteria",
+                    "Plan for bias testing before deployment",
+                ]
+            )
         else:
-            steps.extend([
-                "Complete compliance checklist items",
-                "Document design decisions and rationale",
-                "Schedule pre-launch compliance review",
-            ])
+            steps.extend(
+                [
+                    "Complete compliance checklist items",
+                    "Document design decisions and rationale",
+                    "Schedule pre-launch compliance review",
+                ]
+            )
 
         # Add feature-specific steps
         for fg in guidance:

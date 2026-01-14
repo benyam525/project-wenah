@@ -12,6 +12,7 @@ from wenah.config import settings
 # Lazy import for optional heavy dependency
 try:
     from sentence_transformers import SentenceTransformer
+
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SentenceTransformer = None
@@ -156,82 +157,94 @@ class LawDocumentChunker:
 
         # Chunk the summary
         if summary := law.get("summary"):
-            chunks.append(self._create_chunk(
-                content=f"{law_name}\n\n{summary}",
-                law_id=law_id,
-                law_name=law_name,
-                category=category,
-                section="summary",
-                chunk_type="overview",
-            ))
+            chunks.append(
+                self._create_chunk(
+                    content=f"{law_name}\n\n{summary}",
+                    law_id=law_id,
+                    law_name=law_name,
+                    category=category,
+                    section="summary",
+                    chunk_type="overview",
+                )
+            )
 
         # Chunk protected classes
         for pc in law.get("protected_classes", []):
             content = self._format_protected_class(pc, law_name)
-            chunks.append(self._create_chunk(
-                content=content,
-                law_id=law_id,
-                law_name=law_name,
-                category=category,
-                section="protected_classes",
-                subsection=pc.get("id"),
-                chunk_type="protected_class",
-            ))
+            chunks.append(
+                self._create_chunk(
+                    content=content,
+                    law_id=law_id,
+                    law_name=law_name,
+                    category=category,
+                    section="protected_classes",
+                    subsection=pc.get("id"),
+                    chunk_type="protected_class",
+                )
+            )
 
         # Chunk prohibited practices
         for pp in law.get("prohibited_practices", []):
             content = self._format_prohibited_practice(pp, law_name)
             # This might need further chunking if too long
             for i, chunk_content in enumerate(self._split_if_needed(content)):
-                chunks.append(self._create_chunk(
-                    content=chunk_content,
-                    law_id=law_id,
-                    law_name=law_name,
-                    category=category,
-                    section="prohibited_practices",
-                    subsection=pp.get("id"),
-                    chunk_type="prohibited_practice",
-                    chunk_index=i,
-                    severity=pp.get("severity"),
-                ))
+                chunks.append(
+                    self._create_chunk(
+                        content=chunk_content,
+                        law_id=law_id,
+                        law_name=law_name,
+                        category=category,
+                        section="prohibited_practices",
+                        subsection=pp.get("id"),
+                        chunk_type="prohibited_practice",
+                        chunk_index=i,
+                        severity=pp.get("severity"),
+                    )
+                )
 
         # Chunk safe harbors
         for sh in law.get("safe_harbors", []):
             content = self._format_safe_harbor(sh, law_name)
-            chunks.append(self._create_chunk(
-                content=content,
-                law_id=law_id,
-                law_name=law_name,
-                category=category,
-                section="safe_harbors",
-                subsection=sh.get("id"),
-                chunk_type="safe_harbor",
-            ))
+            chunks.append(
+                self._create_chunk(
+                    content=content,
+                    law_id=law_id,
+                    law_name=law_name,
+                    category=category,
+                    section="safe_harbors",
+                    subsection=sh.get("id"),
+                    chunk_type="safe_harbor",
+                )
+            )
 
         # Chunk AI/ML considerations
         for ai in law.get("ai_ml_considerations", []):
             content = self._format_ai_consideration(ai, law_name)
-            chunks.append(self._create_chunk(
-                content=content,
-                law_id=law_id,
-                law_name=law_name,
-                category=category,
-                section="ai_ml_considerations",
-                subsection=ai.get("id"),
-                chunk_type="ai_consideration",
-            ))
+            chunks.append(
+                self._create_chunk(
+                    content=content,
+                    law_id=law_id,
+                    law_name=law_name,
+                    category=category,
+                    section="ai_ml_considerations",
+                    subsection=ai.get("id"),
+                    chunk_type="ai_consideration",
+                )
+            )
 
         # Chunk key cases
         for case in law.get("key_cases", []):
             content = self._format_key_case(case, law_name)
-            chunks.append(self._create_chunk(
-                content=content,
-                law_id=law_id,
-                law_name=law_name,
-                category=category,
-                section="key_cases",
-                chunk_type="case_law",
-            ))
+            chunks.append(
+                self._create_chunk(
+                    content=content,
+                    law_id=law_id,
+                    law_name=law_name,
+                    category=category,
+                    section="key_cases",
+                    chunk_type="case_law",
+                )
+            )
 
         return chunks
 

@@ -7,18 +7,15 @@ to ensure guardrails are robust.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from wenah.core.types import RAGResponse, ValidationStatus
+from wenah.core.types import RAGResponse
 from wenah.llm.guardrails import (
     HallucinationGuardrails,
-    GuardrailResult,
-    GuardrailSeverity,
     ResponseValidator,
 )
-
 
 # =============================================================================
 # Fixtures
@@ -79,37 +76,45 @@ class TestCitationVerificationEdgeCases:
 
     def test_citation_with_special_characters(self, guardrails):
         """Test citations with special characters."""
-        check = guardrails._verify_citations([
-            "42 U.S.C. § 2000e",
-            "42 USC §2000e",
-            "42 u.s.c. 2000e",
-        ])
+        check = guardrails._verify_citations(
+            [
+                "42 U.S.C. § 2000e",
+                "42 USC §2000e",
+                "42 u.s.c. 2000e",
+            ]
+        )
         assert check.passed is True
 
     def test_citation_partial_match(self, guardrails):
         """Test citation partial matching."""
-        check = guardrails._verify_citations([
-            "Title VII of the Civil Rights Act of 1964",
-            "Americans with Disabilities Act (ADA)",
-        ])
+        check = guardrails._verify_citations(
+            [
+                "Title VII of the Civil Rights Act of 1964",
+                "Americans with Disabilities Act (ADA)",
+            ]
+        )
         assert check.passed is True
 
     def test_mixed_valid_invalid_citations(self, guardrails):
         """Test mix of valid and invalid citations."""
-        check = guardrails._verify_citations([
-            "Title VII",
-            "Fake Law 2099",
-            "ADA",
-        ])
+        check = guardrails._verify_citations(
+            [
+                "Title VII",
+                "Fake Law 2099",
+                "ADA",
+            ]
+        )
         # Should fail due to one invalid
         assert check.passed is False
 
     def test_citation_with_unicode(self, guardrails):
         """Test citation with unicode characters."""
-        check = guardrails._verify_citations([
-            "Title VII §2000e",  # Section symbol
-            "ADA – Americans with Disabilities",  # En dash
-        ])
+        check = guardrails._verify_citations(
+            [
+                "Title VII §2000e",  # Section symbol
+                "ADA – Americans with Disabilities",  # En dash
+            ]
+        )
         assert check.passed is True
 
     def test_citation_very_long_string(self, guardrails):
@@ -120,11 +125,13 @@ class TestCitationVerificationEdgeCases:
 
     def test_all_citations_unknown(self, guardrails):
         """Test when all citations are unknown."""
-        check = guardrails._verify_citations([
-            "Unknown Law 1",
-            "Fictional Statute",
-            "Made Up Act",
-        ])
+        check = guardrails._verify_citations(
+            [
+                "Unknown Law 1",
+                "Fictional Statute",
+                "Made Up Act",
+            ]
+        )
         assert check.passed is False
         assert check.severity == "critical"
 
@@ -159,17 +166,16 @@ class TestGroundingVerificationEdgeCases:
     def test_analysis_no_claims(self, guardrails):
         """Test analysis text with no claims."""
         docs = [{"content": "Employment law information"}]
-        check = guardrails._verify_grounding(
-            "General information about the topic.",
-            docs
-        )
+        check = guardrails._verify_grounding("General information about the topic.", docs)
         assert check.passed is True
 
     def test_analysis_all_claims_grounded(self, guardrails):
         """Test analysis where all claims are grounded."""
-        docs = [{
-            "content": "Title VII prohibits employment discrimination based on race, color, religion, sex, and national origin."
-        }]
+        docs = [
+            {
+                "content": "Title VII prohibits employment discrimination based on race, color, religion, sex, and national origin."
+            }
+        ]
         analysis = "This violates Title VII by discriminating based on race."
         check = guardrails._verify_grounding(analysis, docs)
         assert check.passed is True
@@ -178,7 +184,7 @@ class TestGroundingVerificationEdgeCases:
         """Test analysis where no claims are grounded."""
         docs = [{"content": "Housing laws apply to residential properties."}]
         analysis = "This violates employment law. It is required by ECOA."
-        check = guardrails._verify_grounding(analysis, docs)
+        guardrails._verify_grounding(analysis, docs)
         # May or may not pass depending on grounding ratio threshold
 
     def test_documents_missing_content_key(self, guardrails):
@@ -304,56 +310,55 @@ class TestLegalClaimVerificationEdgeCases:
         """Test analysis with no legal assertions."""
         docs = [{"content": "Employment law basics"}]
         check = guardrails._verify_legal_claims(
-            "This is general information about employment.",
-            docs
+            "This is general information about employment.", docs
         )
         assert check.passed is True
 
     def test_all_assertions_supported(self, guardrails):
         """Test when all assertions are supported."""
-        docs = [{"content": "Title VII prohibits employment discrimination based on race and requires equal treatment."}]
+        docs = [
+            {
+                "content": "Title VII prohibits employment discrimination based on race and requires equal treatment."
+            }
+        ]
         check = guardrails._verify_legal_claims(
-            "This violates Title VII because it discriminates based on race.",
-            docs
+            "This violates Title VII because it discriminates based on race.", docs
         )
         assert check.passed is True
 
     def test_unsupported_assertions(self, guardrails):
         """Test when assertions lack support."""
         docs = [{"content": "Housing regulations apply to rentals."}]
-        check = guardrails._verify_legal_claims(
-            "This violates employment law and is prohibited. Workers must be treated equally.",
-            docs
+        guardrails._verify_legal_claims(
+            "This violates employment law and is prohibited. Workers must be treated equally.", docs
         )
         # Assertions about employment won't be supported by housing docs
 
     def test_mixed_supported_unsupported(self, guardrails):
         """Test mix of supported and unsupported assertions."""
         docs = [{"content": "Discrimination is prohibited under Title VII."}]
-        check = guardrails._verify_legal_claims(
-            "This violates Title VII. It is also required under ECOA.",
-            docs
+        guardrails._verify_legal_claims(
+            "This violates Title VII. It is also required under ECOA.", docs
         )
         # Partial support
 
     def test_empty_documents(self, guardrails):
         """Test with empty document list."""
-        check = guardrails._verify_legal_claims(
-            "This is prohibited and violates the law.",
-            []
-        )
+        guardrails._verify_legal_claims("This is prohibited and violates the law.", [])
         # No documents to support claims
 
     def test_many_assertions(self, guardrails):
         """Test with many assertions."""
         docs = [{"content": "Various prohibited practices exist under law."}]
-        analysis = " ".join([
-            "This is prohibited.",
-            "That is required.",
-            "It must be done.",
-            "They shall comply.",
-            "This violates the law.",
-        ])
+        analysis = " ".join(
+            [
+                "This is prohibited.",
+                "That is required.",
+                "It must be done.",
+                "They shall comply.",
+                "This violates the law.",
+            ]
+        )
         check = guardrails._verify_legal_claims(analysis, docs)
         assert check is not None
 
@@ -387,7 +392,7 @@ class TestContradictionDetectionEdgeCases:
             recommendation="Proceed with caution",
         )
         docs = [{"content": "This is required and prohibited."}]
-        check = guardrails._check_contradictions(response, docs)
+        guardrails._check_contradictions(response, docs)
         # Should detect potential contradiction
 
     def test_no_documents(self, guardrails):
@@ -422,7 +427,7 @@ class TestContradictionDetectionEdgeCases:
             recommendation="Continue monitoring",
         )
         docs = [{"content": "VIOLATION detected."}]
-        check = guardrails._check_contradictions(response, docs)
+        guardrails._check_contradictions(response, docs)
         # Should detect regardless of case
 
 
@@ -459,9 +464,11 @@ class TestFullValidationEdgeCases:
             confidence_score=0.85,
             recommendation="Immediately address compliance gaps",
         )
-        docs = [{
-            "content": "Title VII prohibits employment discrimination based on race, color, religion, sex, national origin."
-        }]
+        docs = [
+            {
+                "content": "Title VII prohibits employment discrimination based on race, color, religion, sex, national origin."
+            }
+        ]
         result = guardrails.validate(response, docs)
         assert result is not None
 
@@ -517,18 +524,14 @@ class TestResponseValidatorEdgeCases:
     def test_validate_json_all_fields_present(self):
         """Test JSON validation with all fields."""
         is_valid, missing = ResponseValidator.validate_json_structure(
-            {"a": 1, "b": 2, "c": 3},
-            ["a", "b", "c"]
+            {"a": 1, "b": 2, "c": 3}, ["a", "b", "c"]
         )
         assert is_valid is True
         assert missing == []
 
     def test_validate_json_partial_fields(self):
         """Test JSON validation with partial fields."""
-        is_valid, missing = ResponseValidator.validate_json_structure(
-            {"a": 1},
-            ["a", "b", "c"]
-        )
+        is_valid, missing = ResponseValidator.validate_json_structure({"a": 1}, ["a", "b", "c"])
         assert is_valid is False
         assert "b" in missing
         assert "c" in missing
@@ -536,8 +539,7 @@ class TestResponseValidatorEdgeCases:
     def test_validate_json_extra_fields(self):
         """Test JSON validation ignores extra fields."""
         is_valid, missing = ResponseValidator.validate_json_structure(
-            {"a": 1, "b": 2, "extra": "data"},
-            ["a", "b"]
+            {"a": 1, "b": 2, "extra": "data"}, ["a", "b"]
         )
         assert is_valid is True
 
@@ -706,9 +708,7 @@ class TestClaimExtractionEdgeCases:
 
     def test_extract_claims_no_assertions(self, guardrails):
         """Test claim extraction with no assertions."""
-        claims = guardrails._extract_claims(
-            "The sky is blue. Water is wet."
-        )
+        claims = guardrails._extract_claims("The sky is blue. Water is wet.")
         assert claims == []
 
     def test_extract_claims_multiple_assertions(self, guardrails):
@@ -719,15 +719,17 @@ class TestClaimExtractionEdgeCases:
 
     def test_extract_claims_single_long_sentence(self, guardrails):
         """Test with single long sentence containing assertion."""
-        text = "After careful review of all the evidence and documentation " \
-               "presented in this case, it is clear that this action violates " \
-               "the established legal requirements."
+        text = (
+            "After careful review of all the evidence and documentation "
+            "presented in this case, it is clear that this action violates "
+            "the established legal requirements."
+        )
         claims = guardrails._extract_claims(text)
         assert len(claims) >= 1
 
     def test_is_claim_grounded_empty_corpus(self, guardrails):
         """Test claim grounding with empty corpus."""
-        result = guardrails._is_claim_grounded("This violates the law", "")
+        guardrails._is_claim_grounded("This violates the law", "")
         # With empty corpus, no terms can be found
 
     def test_is_claim_grounded_empty_claim(self, guardrails):
@@ -738,7 +740,6 @@ class TestClaimExtractionEdgeCases:
     def test_is_claim_grounded_common_words_only(self, guardrails):
         """Test claim with only common words."""
         result = guardrails._is_claim_grounded(
-            "This that with from have been",
-            "employment discrimination law"
+            "This that with from have been", "employment discrimination law"
         )
         assert result is True  # Common words are filtered out

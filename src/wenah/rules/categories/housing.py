@@ -10,7 +10,6 @@ from typing import Any
 
 from wenah.core.types import ProductFeatureInput
 
-
 # FHA Protected Classes
 FHA_PROTECTED_CLASSES = {
     "race",

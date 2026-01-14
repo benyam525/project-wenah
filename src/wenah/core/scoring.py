@@ -5,21 +5,19 @@ Combines rule-based evaluations with LLM analysis to produce
 integrated risk scores with explanations and confidence intervals.
 """
 
-from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 from wenah.config import settings
 from wenah.core.types import (
-    RuleEvaluation,
-    RuleResult,
+    CategoryBreakdown,
+    ComponentScore,
     RAGResponse,
     RiskLevel,
-    ComponentScore,
-    CategoryBreakdown,
+    RuleEvaluation,
+    RuleResult,
     UnifiedRiskScore,
-    RecommendationItem,
-    ViolationDetail,
 )
 
 
@@ -114,7 +112,6 @@ class ScoringEngine:
             Unified risk score with all breakdowns
         """
         component_scores = []
-        weight_adjustments = []
 
         # Calculate rule engine component
         rule_score = self._calculate_rule_score(rule_evaluations)
@@ -140,9 +137,7 @@ class ScoringEngine:
         overall_score = self._combine_scores(adjusted_scores)
 
         # Calculate confidence interval
-        confidence_interval = self._calculate_confidence_interval(
-            adjusted_scores, overall_score
-        )
+        confidence_interval = self._calculate_confidence_interval(adjusted_scores, overall_score)
 
         # Determine risk level
         risk_level = self._score_to_risk_level(overall_score)
@@ -156,9 +151,7 @@ class ScoringEngine:
         category_breakdown = self._calculate_category_breakdown(rule_evaluations)
 
         # Extract concerns and recommendations
-        primary_concerns = self._extract_primary_concerns(
-            rule_evaluations, rag_response
-        )
+        primary_concerns = self._extract_primary_concerns(rule_evaluations, rag_response)
         recommendations = self._generate_recommendations(
             rule_evaluations, rag_response, category_analysis
         )
@@ -192,7 +185,7 @@ class ScoringEngine:
         # Separate by result type
         violations = [e for e in evaluations if e.result == RuleResult.VIOLATION]
         potential = [e for e in evaluations if e.result == RuleResult.POTENTIAL_VIOLATION]
-        compliant = [e for e in evaluations if e.result == RuleResult.COMPLIANT]
+        [e for e in evaluations if e.result == RuleResult.COMPLIANT]
 
         # Check for critical violations
         critical_violations = [e for e in violations if e.risk_score >= 80]
@@ -291,10 +284,7 @@ class ScoringEngine:
         evaluations: list[RuleEvaluation],
     ) -> bool:
         """Check if any evaluation represents a critical violation."""
-        return any(
-            e.result == RuleResult.VIOLATION and e.risk_score >= 80
-            for e in evaluations
-        )
+        return any(e.result == RuleResult.VIOLATION and e.risk_score >= 80 for e in evaluations)
 
     def _adjust_weights(
         self,
@@ -326,14 +316,16 @@ class ScoringEngine:
             # Recalculate weighted score with new weight
             new_weighted = score.raw_score * score.confidence * new_weight
 
-            adjusted.append(ComponentScore(
-                source=score.source,
-                raw_score=score.raw_score,
-                confidence=score.confidence,
-                weight=new_weight,
-                weighted_score=new_weighted,
-                explanation=score.explanation,
-            ))
+            adjusted.append(
+                ComponentScore(
+                    source=score.source,
+                    raw_score=score.raw_score,
+                    confidence=score.confidence,
+                    weight=new_weight,
+                    weighted_score=new_weighted,
+                    explanation=score.explanation,
+                )
+            )
 
         return adjusted
 
@@ -349,13 +341,12 @@ class ScoringEngine:
 
         # Calculate weighted average
         weighted_sum = sum(s.weighted_score for s in scores)
-        normalized_score = (weighted_sum / total_weight) * (100 / max(s.raw_score for s in scores) if any(s.raw_score > 0 for s in scores) else 1)
+        (weighted_sum / total_weight) * (
+            100 / max(s.raw_score for s in scores) if any(s.raw_score > 0 for s in scores) else 1
+        )
 
         # Simpler calculation: direct weighted average
-        final_score = sum(
-            (s.raw_score * s.confidence * s.weight) / total_weight
-            for s in scores
-        )
+        final_score = sum((s.raw_score * s.confidence * s.weight) / total_weight for s in scores)
 
         return max(0, min(100, final_score))
 
@@ -461,7 +452,9 @@ class ScoringEngine:
         consumer = avg_score(consumer_scores)
 
         # Overall is max of categories (most concerning)
-        overall = max(employment, housing, consumer) if any([employment, housing, consumer]) else 0.0
+        overall = (
+            max(employment, housing, consumer) if any([employment, housing, consumer]) else 0.0
+        )
 
         return CategoryBreakdown(
             employment=round(employment, 1),
@@ -480,13 +473,19 @@ class ScoringEngine:
 
         # From rule evaluations
         violations = sorted(
-            [e for e in evaluations if e.result in [RuleResult.VIOLATION, RuleResult.POTENTIAL_VIOLATION]],
+            [
+                e
+                for e in evaluations
+                if e.result in [RuleResult.VIOLATION, RuleResult.POTENTIAL_VIOLATION]
+            ],
             key=lambda e: e.risk_score,
             reverse=True,
         )
 
         for v in violations[:3]:  # Top 3 violations
-            concerns.append(f"{v.rule_name}: {v.recommendations[0] if v.recommendations else 'Review required'}")
+            concerns.append(
+                f"{v.rule_name}: {v.recommendations[0] if v.recommendations else 'Review required'}"
+            )
 
         # From LLM analysis
         if rag_response:
@@ -578,10 +577,12 @@ class ScoreExplainer:
 
         # Recommendations summary
         if unified_score.recommendations:
-            parts.append(self._explain_recommendations(
-                unified_score.recommendations,
-                detail_level,
-            ))
+            parts.append(
+                self._explain_recommendations(
+                    unified_score.recommendations,
+                    detail_level,
+                )
+            )
 
         return "\n\n".join(parts)
 

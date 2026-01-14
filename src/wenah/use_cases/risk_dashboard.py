@@ -8,25 +8,23 @@ breakdowns, and actionable insights for product teams.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
 
-from wenah.core.types import (
-    ProductFeatureInput,
-    RiskLevel,
-    CategoryBreakdown,
-    ViolationDetail,
-    RecommendationItem,
-    RiskAssessmentResponse,
-)
 from wenah.core.engine import (
-    ComplianceEngine,
     AssessmentConfig,
-    FeatureAnalysis,
+    ComplianceEngine,
     get_compliance_engine,
 )
 from wenah.core.scoring import ScoreExplainer, get_score_explainer
+from wenah.core.types import (
+    ProductFeatureInput,
+    RecommendationItem,
+    RiskAssessmentResponse,
+    RiskLevel,
+    ViolationDetail,
+)
 
 
 class DashboardViewType(str, Enum):
@@ -236,8 +234,7 @@ class RiskDashboard:
             "features_at_risk": features_at_risk,
             "total_violations": violations,
             "requires_detailed_analysis": any(
-                self.engine.quick_assess(f).get("requires_full_analysis")
-                for f in features
+                self.engine.quick_assess(f).get("requires_full_analysis") for f in features
             ),
         }
 
@@ -320,20 +317,15 @@ class RiskDashboard:
         ]
 
         # Count features at risk
-        features_at_risk = sum(
-            1 for fs in feature_summaries if fs.requires_attention
-        )
+        features_at_risk = sum(1 for fs in feature_summaries if fs.requires_attention)
 
         # Extract immediate actions (top 5 high-priority recommendations)
-        immediate_actions = [
-            rec.recommendation
-            for rec in assessment.all_recommendations[:5]
-        ]
+        immediate_actions = [rec.recommendation for rec in assessment.all_recommendations[:5]]
 
         return DashboardData(
             product_name=assessment.product_name,
             assessment_id=assessment.assessment_id,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             view_type=view_type,
             overall_score=assessment.overall_risk_score,
             overall_risk_level=assessment.overall_risk_level,
@@ -366,62 +358,74 @@ class RiskDashboard:
         # Employment category
         if breakdown.employment > 0:
             emp_violations = [
-                v for v in self._collect_all_violations(assessment)
+                v
+                for v in self._collect_all_violations(assessment)
                 if "title" in v.law_reference.lower() or "ada" in v.law_reference.lower()
             ]
-            details.append(CategoryRiskDetail(
-                category="employment",
-                display_name="Employment (Title VII, ADA)",
-                score=breakdown.employment,
-                risk_level=self._score_to_level(breakdown.employment),
-                applicable_laws=["Title VII", "ADA"],
-                violation_count=len(emp_violations),
-                top_concerns=[v.description for v in emp_violations[:3]],
-                recommendations=[
-                    r.recommendation for r in assessment.all_recommendations
-                    if r.category == "hiring"
-                ][:3],
-            ))
+            details.append(
+                CategoryRiskDetail(
+                    category="employment",
+                    display_name="Employment (Title VII, ADA)",
+                    score=breakdown.employment,
+                    risk_level=self._score_to_level(breakdown.employment),
+                    applicable_laws=["Title VII", "ADA"],
+                    violation_count=len(emp_violations),
+                    top_concerns=[v.description for v in emp_violations[:3]],
+                    recommendations=[
+                        r.recommendation
+                        for r in assessment.all_recommendations
+                        if r.category == "hiring"
+                    ][:3],
+                )
+            )
 
         # Housing category
         if breakdown.housing > 0:
             housing_violations = [
-                v for v in self._collect_all_violations(assessment)
+                v
+                for v in self._collect_all_violations(assessment)
                 if "fha" in v.law_reference.lower() or "housing" in v.law_reference.lower()
             ]
-            details.append(CategoryRiskDetail(
-                category="housing",
-                display_name="Housing (FHA)",
-                score=breakdown.housing,
-                risk_level=self._score_to_level(breakdown.housing),
-                applicable_laws=["Fair Housing Act"],
-                violation_count=len(housing_violations),
-                top_concerns=[v.description for v in housing_violations[:3]],
-                recommendations=[
-                    r.recommendation for r in assessment.all_recommendations
-                    if r.category == "housing"
-                ][:3],
-            ))
+            details.append(
+                CategoryRiskDetail(
+                    category="housing",
+                    display_name="Housing (FHA)",
+                    score=breakdown.housing,
+                    risk_level=self._score_to_level(breakdown.housing),
+                    applicable_laws=["Fair Housing Act"],
+                    violation_count=len(housing_violations),
+                    top_concerns=[v.description for v in housing_violations[:3]],
+                    recommendations=[
+                        r.recommendation
+                        for r in assessment.all_recommendations
+                        if r.category == "housing"
+                    ][:3],
+                )
+            )
 
         # Consumer category
         if breakdown.consumer > 0:
             consumer_violations = [
-                v for v in self._collect_all_violations(assessment)
+                v
+                for v in self._collect_all_violations(assessment)
                 if "ecoa" in v.law_reference.lower() or "fcra" in v.law_reference.lower()
             ]
-            details.append(CategoryRiskDetail(
-                category="consumer",
-                display_name="Consumer (ECOA, FCRA)",
-                score=breakdown.consumer,
-                risk_level=self._score_to_level(breakdown.consumer),
-                applicable_laws=["ECOA", "FCRA"],
-                violation_count=len(consumer_violations),
-                top_concerns=[v.description for v in consumer_violations[:3]],
-                recommendations=[
-                    r.recommendation for r in assessment.all_recommendations
-                    if r.category in ["lending", "insurance"]
-                ][:3],
-            ))
+            details.append(
+                CategoryRiskDetail(
+                    category="consumer",
+                    display_name="Consumer (ECOA, FCRA)",
+                    score=breakdown.consumer,
+                    risk_level=self._score_to_level(breakdown.consumer),
+                    applicable_laws=["ECOA", "FCRA"],
+                    violation_count=len(consumer_violations),
+                    top_concerns=[v.description for v in consumer_violations[:3]],
+                    recommendations=[
+                        r.recommendation
+                        for r in assessment.all_recommendations
+                        if r.category in ["lending", "insurance"]
+                    ][:3],
+                )
+            )
 
         return details
 
@@ -472,59 +476,71 @@ class RiskDashboard:
 
         # Human review alert
         if data.requires_human_review:
-            lines.extend([
-                "> ⚠️ **Human Review Required**",
-                "> " + ", ".join(data.human_review_reasons[:3]),
-                "",
-            ])
+            lines.extend(
+                [
+                    "> ⚠️ **Human Review Required**",
+                    "> " + ", ".join(data.human_review_reasons[:3]),
+                    "",
+                ]
+            )
 
         # Summary metrics
-        lines.extend([
-            "## Summary Metrics",
-            "",
-            f"| Metric | Value |",
-            f"|--------|-------|",
-            f"| Total Features | {data.total_features} |",
-            f"| Features at Risk | {data.features_at_risk} |",
-            f"| Total Violations | {data.total_violations} |",
-            f"| Critical Violations | {data.critical_violations} |",
-            "",
-        ])
+        lines.extend(
+            [
+                "## Summary Metrics",
+                "",
+                "| Metric | Value |",
+                "|--------|-------|",
+                f"| Total Features | {data.total_features} |",
+                f"| Features at Risk | {data.features_at_risk} |",
+                f"| Total Violations | {data.total_violations} |",
+                f"| Critical Violations | {data.critical_violations} |",
+                "",
+            ]
+        )
 
         # Key concerns
         if data.key_concerns:
-            lines.extend([
-                "## Key Concerns",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Key Concerns",
+                    "",
+                ]
+            )
             for i, concern in enumerate(data.key_concerns, 1):
                 lines.append(f"{i}. {concern}")
             lines.append("")
 
         # Immediate actions
         if data.immediate_actions:
-            lines.extend([
-                "## Immediate Actions Required",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Immediate Actions Required",
+                    "",
+                ]
+            )
             for i, action in enumerate(data.immediate_actions, 1):
                 lines.append(f"{i}. {action}")
             lines.append("")
 
         # Category breakdown
         if data.category_details:
-            lines.extend([
-                "## Risk by Category",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Risk by Category",
+                    "",
+                ]
+            )
             for cat in data.category_details:
-                lines.extend([
-                    f"### {cat.display_name}",
-                    "",
-                    f"**Score:** {cat.score:.0f}/100 ({cat.risk_level.value})",
-                    f"**Violations:** {cat.violation_count}",
-                    "",
-                ])
+                lines.extend(
+                    [
+                        f"### {cat.display_name}",
+                        "",
+                        f"**Score:** {cat.score:.0f}/100 ({cat.risk_level.value})",
+                        f"**Violations:** {cat.violation_count}",
+                        "",
+                    ]
+                )
                 if cat.top_concerns:
                     lines.append("**Top Concerns:**")
                     for concern in cat.top_concerns:
@@ -533,12 +549,14 @@ class RiskDashboard:
 
         # Feature summaries
         if data.feature_summaries:
-            lines.extend([
-                "## Feature Risk Summary",
-                "",
-                "| Feature | Score | Risk Level | Violations | Action Needed |",
-                "|---------|-------|------------|------------|---------------|",
-            ])
+            lines.extend(
+                [
+                    "## Feature Risk Summary",
+                    "",
+                    "| Feature | Score | Risk Level | Violations | Action Needed |",
+                    "|---------|-------|------------|------------|---------------|",
+                ]
+            )
             for fs in data.feature_summaries:
                 action = "Yes" if fs.requires_attention else "No"
                 lines.append(
@@ -548,19 +566,23 @@ class RiskDashboard:
 
         # Positive aspects
         if data.positive_aspects:
-            lines.extend([
-                "## Positive Compliance Aspects",
-                "",
-            ])
+            lines.extend(
+                [
+                    "## Positive Compliance Aspects",
+                    "",
+                ]
+            )
             for aspect in data.positive_aspects:
                 lines.append(f"- ✓ {aspect}")
             lines.append("")
 
-        lines.extend([
-            "---",
-            "",
-            f"*Report generated by Wenah Compliance Framework*",
-        ])
+        lines.extend(
+            [
+                "---",
+                "",
+                "*Report generated by Wenah Compliance Framework*",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -592,19 +614,23 @@ class RiskDashboard:
         ]
 
         if data.key_concerns:
-            lines.extend([
-                "KEY CONCERNS",
-                "-" * 40,
-            ])
+            lines.extend(
+                [
+                    "KEY CONCERNS",
+                    "-" * 40,
+                ]
+            )
             for i, concern in enumerate(data.key_concerns, 1):
                 lines.append(f"{i}. {concern}")
             lines.append("")
 
         if data.immediate_actions:
-            lines.extend([
-                "IMMEDIATE ACTIONS",
-                "-" * 40,
-            ])
+            lines.extend(
+                [
+                    "IMMEDIATE ACTIONS",
+                    "-" * 40,
+                ]
+            )
             for i, action in enumerate(data.immediate_actions, 1):
                 lines.append(f"{i}. {action}")
             lines.append("")

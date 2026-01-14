@@ -6,27 +6,24 @@ Tests the complete flow from feature input to compliance assessment results.
 
 from __future__ import annotations
 
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from wenah.core.engine import AssessmentConfig, ComplianceEngine
+from wenah.core.scoring import get_scoring_engine
 from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
     AlgorithmSpec,
+    DataFieldSpec,
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
     RiskLevel,
     RuleResult,
 )
-from wenah.core.engine import ComplianceEngine, AssessmentConfig
-from wenah.core.scoring import ScoringEngine, get_scoring_engine
-from wenah.rules.rule_engine import RuleEngine, get_rule_engine
-from wenah.use_cases.risk_dashboard import RiskDashboard, get_risk_dashboard
-from wenah.use_cases.design_guidance import DesignGuidanceEngine, get_design_guidance
+from wenah.rules.rule_engine import get_rule_engine
+from wenah.use_cases.design_guidance import get_design_guidance
 from wenah.use_cases.prelaunch_check import PrelaunchChecker, get_prelaunch_checker
-
 
 # =============================================================================
 # Fixtures
@@ -498,10 +495,7 @@ class TestFullPipelineIntegration:
         checker = get_prelaunch_checker()
         quick_result = checker.quick_check([risky_hiring_feature])
         # Should either have blocking issues or warnings
-        has_concerns = (
-            len(quick_result["blocking_issues"]) > 0
-            or len(quick_result["warnings"]) > 0
-        )
+        has_concerns = len(quick_result["blocking_issues"]) > 0 or len(quick_result["warnings"]) > 0
         assert has_concerns or quick_result["recommendation"] != "APPROVED"
 
 

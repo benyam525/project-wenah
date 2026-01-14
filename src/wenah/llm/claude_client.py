@@ -5,9 +5,9 @@ Provides structured output support and retry logic for the Anthropic Claude API.
 """
 
 import json
-from typing import Any, TypeVar, Type
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, TypeVar
 
 import anthropic
 from pydantic import BaseModel
@@ -112,9 +112,7 @@ class ClaudeClient:
         response = self._call_with_retry(**kwargs)
 
         # Track usage
-        self._total_tokens_used += (
-            response.usage.input_tokens + response.usage.output_tokens
-        )
+        self._total_tokens_used += response.usage.input_tokens + response.usage.output_tokens
 
         return ClaudeResponse(
             content=response.content[0].text,
@@ -130,7 +128,7 @@ class ClaudeClient:
     def analyze_structured(
         self,
         prompt: str,
-        response_model: Type[T],
+        response_model: type[T],
         system_prompt: str | None = None,
         max_tokens: int = 4096,
     ) -> T:
@@ -234,9 +232,7 @@ Respond ONLY with the JSON object, no additional text or markdown formatting."""
             section = metadata.get("section", "")
 
             context_parts.append(
-                f"### Source {i}: {source}"
-                + (f" - {section}" if section else "")
-                + f"\n{content}"
+                f"### Source {i}: {source}" + (f" - {section}" if section else "") + f"\n{content}"
             )
 
         context_text = "\n\n".join(context_parts)
@@ -319,12 +315,12 @@ Respond ONLY with the JSON object, no additional text or markdown formatting."""
                 return self._client.messages.create(**kwargs)
             except anthropic.RateLimitError as e:
                 last_error = e
-                wait_time = 2 ** attempt  # Exponential backoff
+                wait_time = 2**attempt  # Exponential backoff
                 time.sleep(wait_time)
             except anthropic.APIStatusError as e:
                 if e.status_code >= 500:
                     last_error = e
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     time.sleep(wait_time)
                 else:
                     raise
@@ -431,7 +427,7 @@ Provide:
 {practice_description}
 
 **Potentially Affected Groups:**
-{', '.join(affected_groups)}
+{", ".join(affected_groups)}
 
 Analyze:
 1. Whether the practice is facially neutral

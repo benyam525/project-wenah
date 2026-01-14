@@ -8,21 +8,20 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
 
+from wenah.core.types import LawCategory
 from wenah.data.loaders import (
     LawLoader,
-    RuleLoader,
     PrecedentLoader,
-    load_employment_laws,
+    RuleLoader,
     load_all_laws,
     load_all_rules,
+    load_employment_laws,
 )
-from wenah.core.types import LawCategory
-
 
 # =============================================================================
 # Fixtures

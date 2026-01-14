@@ -10,7 +10,7 @@ Main FastAPI application providing endpoints for:
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import FastAPI, Request, status
@@ -18,30 +18,28 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from wenah.api.routes import assess_router, guidance_router, check_router
+from wenah.api.routes import assess_router, check_router, guidance_router
 from wenah.api.schemas import (
-    HealthResponse,
-    DetailedHealthResponse,
+    APIInfoResponse,
     ComponentHealth,
-    ReadinessResponse,
+    DetailedHealthResponse,
+    HealthResponse,
     LivenessResponse,
     MetricsResponse,
-    APIInfoResponse,
-    ErrorResponse,
-    ValidationErrorResponse,
+    ReadinessResponse,
 )
 from wenah.config import Settings
-
 
 # =============================================================================
 # Application State for Metrics
 # =============================================================================
 
+
 class AppMetrics:
     """Simple in-memory metrics collector."""
 
     def __init__(self):
-        self.start_time: datetime = datetime.now(timezone.utc)
+        self.start_time: datetime = datetime.now(UTC)
         self.requests_total: int = 0
         self.requests_by_endpoint: dict[str, int] = {}
         self.response_times: list[float] = []
@@ -50,7 +48,7 @@ class AppMetrics:
     @property
     def uptime_seconds(self) -> float:
         """Get uptime in seconds."""
-        return (datetime.now(timezone.utc) - self.start_time).total_seconds()
+        return (datetime.now(UTC) - self.start_time).total_seconds()
 
     @property
     def average_response_time_ms(self) -> float:
@@ -70,6 +68,7 @@ class AppMetrics:
 # =============================================================================
 # Application Lifespan
 # =============================================================================
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -92,6 +91,7 @@ async def lifespan(app: FastAPI):
 # =============================================================================
 # Application Factory
 # =============================================================================
+
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     """
@@ -184,6 +184,7 @@ Currently no authentication is required. API rate limiting may apply.
 # Exception Handlers
 # =============================================================================
 
+
 def register_exception_handlers(app: FastAPI) -> None:
     """Register custom exception handlers."""
 
@@ -202,9 +203,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Handle unexpected exceptions."""
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -212,7 +211,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "error": "Internal Server Error",
                 "detail": str(exc),
                 "code": "INTERNAL_ERROR",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -220,6 +219,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 # =============================================================================
 # Health and Info Endpoints
 # =============================================================================
+
 
 def register_health_endpoints(app: FastAPI) -> None:
     """Register health check and API info endpoints."""
@@ -236,7 +236,7 @@ def register_health_endpoints(app: FastAPI) -> None:
         return HealthResponse(
             status="healthy",
             version="0.1.0",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         )
 
     @app.get(
@@ -258,60 +258,75 @@ def register_health_endpoints(app: FastAPI) -> None:
         try:
             start = time.time()
             from wenah.rules.rule_engine import get_rule_engine
-            engine = get_rule_engine()
+
+            get_rule_engine()
             latency = (time.time() - start) * 1000
-            components.append(ComponentHealth(
-                name="rule_engine",
-                status="healthy",
-                latency_ms=latency,
-            ))
+            components.append(
+                ComponentHealth(
+                    name="rule_engine",
+                    status="healthy",
+                    latency_ms=latency,
+                )
+            )
             checks_passed += 1
         except Exception as e:
-            components.append(ComponentHealth(
-                name="rule_engine",
-                status="unhealthy",
-                message=str(e),
-            ))
+            components.append(
+                ComponentHealth(
+                    name="rule_engine",
+                    status="unhealthy",
+                    message=str(e),
+                )
+            )
             checks_failed += 1
 
         # Check scoring engine
         try:
             start = time.time()
             from wenah.core.scoring import get_scoring_engine
-            engine = get_scoring_engine()
+
+            get_scoring_engine()
             latency = (time.time() - start) * 1000
-            components.append(ComponentHealth(
-                name="scoring_engine",
-                status="healthy",
-                latency_ms=latency,
-            ))
+            components.append(
+                ComponentHealth(
+                    name="scoring_engine",
+                    status="healthy",
+                    latency_ms=latency,
+                )
+            )
             checks_passed += 1
         except Exception as e:
-            components.append(ComponentHealth(
-                name="scoring_engine",
-                status="unhealthy",
-                message=str(e),
-            ))
+            components.append(
+                ComponentHealth(
+                    name="scoring_engine",
+                    status="unhealthy",
+                    message=str(e),
+                )
+            )
             checks_failed += 1
 
         # Check design guidance
         try:
             start = time.time()
             from wenah.use_cases.design_guidance import get_design_guidance
-            guidance = get_design_guidance()
+
+            get_design_guidance()
             latency = (time.time() - start) * 1000
-            components.append(ComponentHealth(
-                name="design_guidance",
-                status="healthy",
-                latency_ms=latency,
-            ))
+            components.append(
+                ComponentHealth(
+                    name="design_guidance",
+                    status="healthy",
+                    latency_ms=latency,
+                )
+            )
             checks_passed += 1
         except Exception as e:
-            components.append(ComponentHealth(
-                name="design_guidance",
-                status="unhealthy",
-                message=str(e),
-            ))
+            components.append(
+                ComponentHealth(
+                    name="design_guidance",
+                    status="unhealthy",
+                    message=str(e),
+                )
+            )
             checks_failed += 1
 
         # Determine overall status
@@ -327,7 +342,7 @@ def register_health_endpoints(app: FastAPI) -> None:
         return DetailedHealthResponse(
             status=overall_status,
             version="0.1.0",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             uptime_seconds=metrics.uptime_seconds,
             components=components,
             checks_passed=checks_passed,
@@ -356,8 +371,8 @@ def register_health_endpoints(app: FastAPI) -> None:
         """Return readiness status for Kubernetes."""
         try:
             # Check that core services are available
-            from wenah.rules.rule_engine import get_rule_engine
             from wenah.core.scoring import get_scoring_engine
+            from wenah.rules.rule_engine import get_rule_engine
 
             get_rule_engine()
             get_scoring_engine()
@@ -465,6 +480,7 @@ app = create_app()
 # =============================================================================
 # CLI Entry Point
 # =============================================================================
+
 
 def main() -> None:
     """Run the API server using uvicorn."""

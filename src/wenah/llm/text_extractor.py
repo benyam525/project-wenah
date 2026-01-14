@@ -7,19 +7,17 @@ information from product feature descriptions.
 
 import json
 import re
-from typing import Any
 
 from pydantic import BaseModel
 
 from wenah.config import settings
 from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
     AlgorithmSpec,
+    DataFieldSpec,
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
 )
-
 
 # Proxy variable mappings for civil rights compliance
 PROXY_MAPPINGS = {
@@ -77,6 +75,7 @@ PROXY_MAPPINGS = {
 
 class ExtractedDataField(BaseModel):
     """Extracted data field from text."""
+
     name: str
     description: str = ""
     used_in_decisions: bool = True
@@ -85,6 +84,7 @@ class ExtractedDataField(BaseModel):
 
 class ExtractedAlgorithm(BaseModel):
     """Extracted algorithm details from text."""
+
     type: str = "unknown"
     has_human_review: bool = True
     bias_testing_mentioned: bool = False
@@ -93,6 +93,7 @@ class ExtractedAlgorithm(BaseModel):
 
 class ExtractionResult(BaseModel):
     """Result of text extraction."""
+
     data_fields: list[ExtractedDataField]
     algorithm: ExtractedAlgorithm
     decision_impact: str
@@ -123,6 +124,7 @@ class TextExtractor:
         if self._client is None and self.use_llm:
             try:
                 import anthropic
+
                 api_key = settings.anthropic_api_key
                 if api_key:
                     self._client = anthropic.Anthropic(api_key=api_key)
@@ -215,23 +217,20 @@ Return ONLY the JSON object, no other text."""
             model=settings.claude_model or "claude-sonnet-4-20250514",
             max_tokens=2000,
             temperature=0,
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         # Parse the response
         content = response.content[0].text
 
         # Extract JSON from response (handle markdown code blocks)
-        json_match = re.search(r'\{[\s\S]*\}', content)
+        json_match = re.search(r"\{[\s\S]*\}", content)
         if json_match:
             json_str = json_match.group()
             data = json.loads(json_str)
 
             return ExtractionResult(
-                data_fields=[
-                    ExtractedDataField(**field)
-                    for field in data.get("data_fields", [])
-                ],
+                data_fields=[ExtractedDataField(**field) for field in data.get("data_fields", [])],
                 algorithm=ExtractedAlgorithm(**data.get("algorithm", {})),
                 decision_impact=data.get("decision_impact", "Unknown"),
                 affected_population=data.get("affected_population", "General users"),
@@ -262,50 +261,67 @@ Return ONLY the JSON object, no other text."""
                 # Normalize the field name
                 field_name = keyword.replace(" ", "_").replace("-", "_")
 
-                data_fields.append(ExtractedDataField(
-                    name=field_name,
-                    description=f"Uses {keyword} data",
-                    used_in_decisions=True,
-                    potential_proxy=proxies[0] if proxies else None,
-                ))
+                data_fields.append(
+                    ExtractedDataField(
+                        name=field_name,
+                        description=f"Uses {keyword} data",
+                        used_in_decisions=True,
+                        potential_proxy=proxies[0] if proxies else None,
+                    )
+                )
                 found_fields.add(keyword)
 
         # Detect algorithm characteristics
-        has_human_review = not any(phrase in combined_text for phrase in [
-            "without human review",
-            "no human review",
-            "automated",
-            "automatically",
-            "no manual",
-            "fully automated",
-        ])
+        has_human_review = not any(
+            phrase in combined_text
+            for phrase in [
+                "without human review",
+                "no human review",
+                "automated",
+                "automatically",
+                "no manual",
+                "fully automated",
+            ]
+        )
 
-        automated_decisions = any(phrase in combined_text for phrase in [
-            "automat",
-            "ai system",
-            "ml model",
-            "machine learning",
-            "algorithm",
-            "scoring",
-        ])
+        automated_decisions = any(
+            phrase in combined_text
+            for phrase in [
+                "automat",
+                "ai system",
+                "ml model",
+                "machine learning",
+                "algorithm",
+                "scoring",
+            ]
+        )
 
-        bias_testing = any(phrase in combined_text for phrase in [
-            "bias test",
-            "fairness audit",
-            "bias audit",
-            "disparate impact analysis",
-        ])
+        bias_testing = any(
+            phrase in combined_text
+            for phrase in [
+                "bias test",
+                "fairness audit",
+                "bias audit",
+                "disparate impact analysis",
+            ]
+        )
 
-        has_appeals = not any(phrase in combined_text for phrase in [
-            "no appeal",
-            "no recourse",
-            "final decision",
-            "cannot be contested",
-        ])
+        has_appeals = not any(
+            phrase in combined_text
+            for phrase in [
+                "no appeal",
+                "no recourse",
+                "final decision",
+                "cannot be contested",
+            ]
+        )
 
         # Determine algorithm type
         alg_type = "unknown"
-        if any(term in combined_text for term in ["ai", "machine learning", "ml", "neural", "deep learning"]):
+        if any(
+            term in combined_text
+            for term in ["ai", "machine learning", "ml", "neural", "deep learning"]
+        ):
             alg_type = "ml_model"
         elif any(term in combined_text for term in ["llm", "gpt", "language model", "chatbot"]):
             alg_type = "ai_llm"
@@ -331,7 +347,9 @@ Return ONLY the JSON object, no other text."""
                 bias_testing_mentioned=bias_testing,
                 automated_decisions=automated_decisions,
             ),
-            decision_impact=f"Automated {category} decisions" if automated_decisions else f"{category.title()} decisions",
+            decision_impact=f"Automated {category} decisions"
+            if automated_decisions
+            else f"{category.title()} decisions",
             affected_population=affected_pop,
             has_appeals_process=has_appeals,
             confidence=0.7 if data_fields else 0.5,
@@ -458,6 +476,4 @@ def extract_and_convert(
     """
     extractor = get_text_extractor(use_llm=use_llm)
     extraction = extractor.extract(description, name, category)
-    return extractor.to_product_feature_input(
-        extraction, feature_id, name, description, category
-    )
+    return extractor.to_product_feature_input(extraction, feature_id, name, description, category)

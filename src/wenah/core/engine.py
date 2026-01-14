@@ -5,39 +5,37 @@ Coordinates all components (rule engine, RAG pipeline, scoring) to
 produce comprehensive compliance assessments.
 """
 
-from typing import Any
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
 import uuid
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from typing import Any
 
-from wenah.core.types import (
-    ProductFeatureInput,
-    RuleEvaluation,
-    RAGResponse,
-    UnifiedRiskScore,
-    RiskAssessmentResponse,
-    FeatureAssessment,
-    ViolationDetail,
-    RecommendationItem,
-    RiskLevel,
-    RuleResult,
-)
 from wenah.core.scoring import (
-    ScoringEngine,
     ScoreExplainer,
-    get_scoring_engine,
+    ScoringEngine,
     get_score_explainer,
+    get_scoring_engine,
 )
-from wenah.rules.rule_engine import RuleEngine, get_rule_engine
+from wenah.core.types import (
+    FeatureAssessment,
+    ProductFeatureInput,
+    RecommendationItem,
+    RiskAssessmentResponse,
+    RiskLevel,
+    RuleEvaluation,
+    RuleResult,
+    UnifiedRiskScore,
+    ViolationDetail,
+)
 from wenah.rules.categories.employment import (
-    EmploymentCategoryProcessor,
     get_employment_processor,
 )
-from wenah.config import settings
+from wenah.rules.rule_engine import RuleEngine, get_rule_engine
 
 # Optional RAG pipeline - requires heavy ML dependencies
 try:
-    from wenah.llm.rag_pipeline import RAGPipeline, get_rag_pipeline, RAGResult
+    from wenah.llm.rag_pipeline import RAGPipeline, RAGResult, get_rag_pipeline
+
     RAG_AVAILABLE = True
 except ImportError:
     RAGPipeline = None
@@ -201,8 +199,7 @@ class ComplianceEngine:
 
         # Build feature assessments
         feature_assessments = [
-            self._build_feature_assessment(analysis)
-            for analysis in feature_analyses
+            self._build_feature_assessment(analysis) for analysis in feature_analyses
         ]
 
         # Calculate overall scores
@@ -234,9 +231,7 @@ class ComplianceEngine:
         )
 
         # Determine human review needs
-        requires_human_review, review_reasons = self._aggregate_human_review_needs(
-            feature_analyses
-        )
+        requires_human_review, review_reasons = self._aggregate_human_review_needs(feature_analyses)
 
         # Extract key concerns and positive aspects
         key_concerns = self._extract_key_concerns(feature_analyses)
@@ -245,7 +240,7 @@ class ComplianceEngine:
         return RiskAssessmentResponse(
             assessment_id=assessment_id,
             product_name=product_name,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             overall_risk_score=overall_score,
             overall_risk_level=overall_level,
             confidence_score=confidence_score,
@@ -287,15 +282,16 @@ class ComplianceEngine:
         return {
             "feature_id": feature.feature_id,
             "risk_score": analysis.unified_score.overall_score if analysis.unified_score else 0,
-            "risk_level": analysis.unified_score.risk_level.value if analysis.unified_score else "unknown",
-            "violations_count": len([
-                e for e in analysis.rule_evaluations
-                if e.result == RuleResult.VIOLATION
-            ]),
-            "requires_full_analysis": any(
-                e.escalate_to_llm for e in analysis.rule_evaluations
+            "risk_level": analysis.unified_score.risk_level.value
+            if analysis.unified_score
+            else "unknown",
+            "violations_count": len(
+                [e for e in analysis.rule_evaluations if e.result == RuleResult.VIOLATION]
             ),
-            "primary_concerns": analysis.unified_score.primary_concerns[:3] if analysis.unified_score else [],
+            "requires_full_analysis": any(e.escalate_to_llm for e in analysis.rule_evaluations),
+            "primary_concerns": analysis.unified_score.primary_concerns[:3]
+            if analysis.unified_score
+            else [],
         }
 
     def _run_category_analysis(
@@ -360,20 +356,24 @@ class ComplianceEngine:
                 # Higher score if used in decisions
                 risk_score = 75 if used_in_decisions else 55
 
-                evaluations.append(RuleEvaluation(
-                    rule_id=f"proxy-{eval_id}",
-                    rule_name=f"Proxy Variable Detection: {field_name}",
-                    result=RuleResult.VIOLATION if used_in_decisions else RuleResult.POTENTIAL_VIOLATION,
-                    confidence=0.85,
-                    risk_score=risk_score,
-                    law_references=applicable_laws,
-                    recommendations=[
-                        f"Remove '{field_name}' from decision inputs or justify business necessity",
-                        f"Conduct disparate impact analysis for {proxy_str} correlation",
-                    ],
-                    escalate_to_llm=True,
-                    llm_context={"field": field_name, "proxy_for": proxy_str},
-                ))
+                evaluations.append(
+                    RuleEvaluation(
+                        rule_id=f"proxy-{eval_id}",
+                        rule_name=f"Proxy Variable Detection: {field_name}",
+                        result=RuleResult.VIOLATION
+                        if used_in_decisions
+                        else RuleResult.POTENTIAL_VIOLATION,
+                        confidence=0.85,
+                        risk_score=risk_score,
+                        law_references=applicable_laws,
+                        recommendations=[
+                            f"Remove '{field_name}' from decision inputs or justify business necessity",
+                            f"Conduct disparate impact analysis for {proxy_str} correlation",
+                        ],
+                        escalate_to_llm=True,
+                        llm_context={"field": field_name, "proxy_for": proxy_str},
+                    )
+                )
                 eval_id += 1
 
         # Convert protected class exposure to critical violations
@@ -385,20 +385,22 @@ class ComplianceEngine:
 
             risk_score = 90 if used_in_decisions else 70
 
-            evaluations.append(RuleEvaluation(
-                rule_id=f"protected-{eval_id}",
-                rule_name=f"Protected Class Data: {protected_class}",
-                result=RuleResult.VIOLATION,
-                confidence=0.95,
-                risk_score=risk_score,
-                law_references=applicable_laws,
-                recommendations=[
-                    f"Remove '{field_name}' from all decision-making processes",
-                    "If required for reporting, collect separately post-decision",
-                ],
-                escalate_to_llm=False,
-                llm_context=None,
-            ))
+            evaluations.append(
+                RuleEvaluation(
+                    rule_id=f"protected-{eval_id}",
+                    rule_name=f"Protected Class Data: {protected_class}",
+                    result=RuleResult.VIOLATION,
+                    confidence=0.95,
+                    risk_score=risk_score,
+                    law_references=applicable_laws,
+                    recommendations=[
+                        f"Remove '{field_name}' from all decision-making processes",
+                        "If required for reporting, collect separately post-decision",
+                    ],
+                    escalate_to_llm=False,
+                    llm_context=None,
+                )
+            )
             eval_id += 1
 
         # Convert ADA concerns to critical violations
@@ -407,60 +409,66 @@ class ComplianceEngine:
             field_name = ada.get("field", "unknown")
             concern_type = ada.get("type", "ada_violation")
 
-            evaluations.append(RuleEvaluation(
-                rule_id=f"ada-{eval_id}",
-                rule_name=f"ADA Violation: {concern_type}",
-                result=RuleResult.VIOLATION,
-                confidence=0.90,
-                risk_score=85,
-                law_references=["ADA § 102"],
-                recommendations=[
-                    f"Remove '{field_name}' from pre-offer inquiries",
-                    "Medical inquiries only permitted post-conditional offer",
-                ],
-                escalate_to_llm=False,
-                llm_context=None,
-            ))
+            evaluations.append(
+                RuleEvaluation(
+                    rule_id=f"ada-{eval_id}",
+                    rule_name=f"ADA Violation: {concern_type}",
+                    result=RuleResult.VIOLATION,
+                    confidence=0.90,
+                    risk_score=85,
+                    law_references=["ADA § 102"],
+                    recommendations=[
+                        f"Remove '{field_name}' from pre-offer inquiries",
+                        "Medical inquiries only permitted post-conditional offer",
+                    ],
+                    escalate_to_llm=False,
+                    llm_context=None,
+                )
+            )
             eval_id += 1
 
         # Convert algorithm findings to violations
         findings = category_analysis.get("findings", [])
         for finding in findings:
             finding_type = finding.get("type", "unknown")
-            severity = finding.get("severity", "medium")
+            finding.get("severity", "medium")
 
             if finding_type == "missing_bias_testing":
-                evaluations.append(RuleEvaluation(
-                    rule_id=f"finding-{eval_id}",
-                    rule_name="Missing Bias Testing",
-                    result=RuleResult.VIOLATION,
-                    confidence=0.85,
-                    risk_score=65,
-                    law_references=["Best Practice", "NYC Local Law 144"],
-                    recommendations=[
-                        "Conduct bias/fairness audit on algorithm",
-                        "Document disparate impact analysis",
-                    ],
-                    escalate_to_llm=True,
-                    llm_context={"concern": "Algorithm lacks documented bias testing"},
-                ))
+                evaluations.append(
+                    RuleEvaluation(
+                        rule_id=f"finding-{eval_id}",
+                        rule_name="Missing Bias Testing",
+                        result=RuleResult.VIOLATION,
+                        confidence=0.85,
+                        risk_score=65,
+                        law_references=["Best Practice", "NYC Local Law 144"],
+                        recommendations=[
+                            "Conduct bias/fairness audit on algorithm",
+                            "Document disparate impact analysis",
+                        ],
+                        escalate_to_llm=True,
+                        llm_context={"concern": "Algorithm lacks documented bias testing"},
+                    )
+                )
                 eval_id += 1
 
             elif finding_type == "high_risk_hiring_algorithm":
-                evaluations.append(RuleEvaluation(
-                    rule_id=f"finding-{eval_id}",
-                    rule_name="High-Risk Hiring Algorithm",
-                    result=RuleResult.VIOLATION,
-                    confidence=0.80,
-                    risk_score=70,
-                    law_references=["ADA", "Title VII"],
-                    recommendations=[
-                        "Evaluate algorithm for disability discrimination",
-                        "Ensure accommodations available for candidates with disabilities",
-                    ],
-                    escalate_to_llm=True,
-                    llm_context={"concern": finding.get("concern", "High-risk input detected")},
-                ))
+                evaluations.append(
+                    RuleEvaluation(
+                        rule_id=f"finding-{eval_id}",
+                        rule_name="High-Risk Hiring Algorithm",
+                        result=RuleResult.VIOLATION,
+                        confidence=0.80,
+                        risk_score=70,
+                        law_references=["ADA", "Title VII"],
+                        recommendations=[
+                            "Evaluate algorithm for disability discrimination",
+                            "Ensure accommodations available for candidates with disabilities",
+                        ],
+                        escalate_to_llm=True,
+                        llm_context={"concern": finding.get("concern", "High-risk input detected")},
+                    )
+                )
                 eval_id += 1
 
         return evaluations
@@ -475,9 +483,11 @@ class ComplianceEngine:
         # Check if RAG analysis is warranted
         needs_rag = (
             # Has escalated rules
-            any(e.escalate_to_llm for e in rule_evaluations) or
+            any(e.escalate_to_llm for e in rule_evaluations)
+            or
             # Has high-risk evaluations
-            any(e.risk_score >= 60 for e in rule_evaluations) or
+            any(e.risk_score >= 60 for e in rule_evaluations)
+            or
             # Has potential violations needing clarification
             any(e.result == RuleResult.POTENTIAL_VIOLATION for e in rule_evaluations)
         )
@@ -507,14 +517,16 @@ class ComplianceEngine:
         recommendations = []
         if analysis.unified_score:
             for i, rec in enumerate(analysis.unified_score.recommendations[:5], 1):
-                recommendations.append(RecommendationItem(
-                    priority=i,
-                    category=analysis.feature.category.value,
-                    recommendation=rec,
-                    rationale="Based on compliance analysis",
-                    estimated_effort="medium",
-                    law_references=[],
-                ))
+                recommendations.append(
+                    RecommendationItem(
+                        priority=i,
+                        category=analysis.feature.category.value,
+                        recommendation=rec,
+                        rationale="Based on compliance analysis",
+                        estimated_effort="medium",
+                        law_references=[],
+                    )
+                )
 
         compliant_aspects = []
         for eval in analysis.rule_evaluations:
@@ -525,12 +537,18 @@ class ComplianceEngine:
             feature_id=analysis.feature.feature_id,
             feature_name=analysis.feature.name,
             risk_score=analysis.unified_score.overall_score if analysis.unified_score else 0,
-            risk_level=analysis.unified_score.risk_level if analysis.unified_score else RiskLevel.MINIMAL,
+            risk_level=analysis.unified_score.risk_level
+            if analysis.unified_score
+            else RiskLevel.MINIMAL,
             violations=violations,
             recommendations=recommendations,
             compliant_aspects=compliant_aspects[:5],
-            requires_human_review=analysis.unified_score.requires_human_review if analysis.unified_score else False,
-            llm_analysis_summary=analysis.rag_result.response.analysis[:500] if analysis.rag_result else None,
+            requires_human_review=analysis.unified_score.requires_human_review
+            if analysis.unified_score
+            else False,
+            llm_analysis_summary=analysis.rag_result.response.analysis[:500]
+            if analysis.rag_result
+            else None,
         )
 
     def _extract_violations(
@@ -543,23 +561,32 @@ class ComplianceEngine:
         for eval in analysis.rule_evaluations:
             if eval.result in [RuleResult.VIOLATION, RuleResult.POTENTIAL_VIOLATION]:
                 severity = (
-                    RiskLevel.CRITICAL if eval.risk_score >= 80
-                    else RiskLevel.HIGH if eval.risk_score >= 60
-                    else RiskLevel.MEDIUM if eval.risk_score >= 40
+                    RiskLevel.CRITICAL
+                    if eval.risk_score >= 80
+                    else RiskLevel.HIGH
+                    if eval.risk_score >= 60
+                    else RiskLevel.MEDIUM
+                    if eval.risk_score >= 40
                     else RiskLevel.LOW
                 )
 
-                violations.append(ViolationDetail(
-                    violation_id=f"v-{eval.rule_id}",
-                    law_reference=eval.law_references[0] if eval.law_references else "",
-                    law_name=self._law_ref_to_name(eval.law_references[0] if eval.law_references else ""),
-                    section=eval.rule_name,
-                    severity=severity,
-                    description=eval.recommendations[0] if eval.recommendations else "Compliance issue detected",
-                    affected_feature=analysis.feature.feature_id,
-                    confidence=eval.confidence,
-                    source="rule_engine",
-                ))
+                violations.append(
+                    ViolationDetail(
+                        violation_id=f"v-{eval.rule_id}",
+                        law_reference=eval.law_references[0] if eval.law_references else "",
+                        law_name=self._law_ref_to_name(
+                            eval.law_references[0] if eval.law_references else ""
+                        ),
+                        section=eval.rule_name,
+                        severity=severity,
+                        description=eval.recommendations[0]
+                        if eval.recommendations
+                        else "Compliance issue detected",
+                        affected_feature=analysis.feature.feature_id,
+                        confidence=eval.confidence,
+                        source="rule_engine",
+                    )
+                )
 
         return violations
 
@@ -586,11 +613,7 @@ class ComplianceEngine:
         if not analyses:
             return 0.0, RiskLevel.MINIMAL
 
-        scores = [
-            a.unified_score.overall_score
-            for a in analyses
-            if a.unified_score
-        ]
+        scores = [a.unified_score.overall_score for a in analyses if a.unified_score]
 
         if not scores:
             return 0.0, RiskLevel.MINIMAL
@@ -630,11 +653,7 @@ class ComplianceEngine:
         analyses: list[FeatureAnalysis],
     ) -> tuple[float, float]:
         """Calculate overall confidence interval."""
-        intervals = [
-            a.unified_score.confidence_interval
-            for a in analyses
-            if a.unified_score
-        ]
+        intervals = [a.unified_score.confidence_interval for a in analyses if a.unified_score]
 
         if not intervals:
             return (0, 100)
@@ -693,14 +712,16 @@ class ComplianceEngine:
             if analysis.unified_score:
                 for rec in analysis.unified_score.recommendations:
                     if rec not in seen:
-                        all_recs.append(RecommendationItem(
-                            priority=priority,
-                            category=analysis.feature.category.value,
-                            recommendation=rec,
-                            rationale="Based on compliance analysis",
-                            estimated_effort="medium",
-                            law_references=[],
-                        ))
+                        all_recs.append(
+                            RecommendationItem(
+                                priority=priority,
+                                category=analysis.feature.category.value,
+                                recommendation=rec,
+                                rationale="Based on compliance analysis",
+                                estimated_effort="medium",
+                                law_references=[],
+                            )
+                        )
                         seen.add(rec)
                         priority += 1
 
@@ -726,7 +747,9 @@ class ComplianceEngine:
         summary = f"Assessment of {product_name} analyzed {feature_count} feature(s) "
         summary += f"and identified {violation_count} potential compliance issue(s). "
         summary += f"The overall risk score is {overall_score:.0f}/100 ({overall_level.value}), "
-        summary += f"indicating {level_text.get(overall_level, 'compliance status requiring review')}."
+        summary += (
+            f"indicating {level_text.get(overall_level, 'compliance status requiring review')}."
+        )
 
         return summary
 
@@ -767,10 +790,7 @@ class ComplianceEngine:
                 positives.append(f"Bias testing completed for {a.feature.name}")
 
             # Check for compliant rules
-            compliant_count = sum(
-                1 for e in a.rule_evaluations
-                if e.result == RuleResult.COMPLIANT
-            )
+            compliant_count = sum(1 for e in a.rule_evaluations if e.result == RuleResult.COMPLIANT)
             if compliant_count > 0:
                 positives.append(f"{a.feature.name} passed {compliant_count} compliance check(s)")
 

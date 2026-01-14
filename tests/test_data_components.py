@@ -7,7 +7,6 @@ Tests are primarily mocked to avoid external dependencies.
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
-import pytest
 
 from wenah.data.embeddings import (
     EmbeddingGenerator,
@@ -16,9 +15,7 @@ from wenah.data.embeddings import (
 )
 from wenah.data.vector_store import (
     VectorStore,
-    get_vector_store,
 )
-
 
 # =============================================================================
 # EmbeddingGenerator Tests
@@ -68,9 +65,7 @@ class TestEmbeddingGenerator:
     def test_embed_texts(self, mock_st):
         """Test embedding multiple texts."""
         mock_model = MagicMock()
-        mock_model.encode.return_value = MagicMock(
-            tolist=lambda: [[0.1, 0.2], [0.3, 0.4]]
-        )
+        mock_model.encode.return_value = MagicMock(tolist=lambda: [[0.1, 0.2], [0.3, 0.4]])
         mock_st.return_value = mock_model
 
         generator = EmbeddingGenerator(model_name="test-model")
@@ -84,9 +79,7 @@ class TestEmbeddingGenerator:
     def test_embed_documents(self, mock_st):
         """Test adding embeddings to documents."""
         mock_model = MagicMock()
-        mock_model.encode.return_value = MagicMock(
-            tolist=lambda: [[0.1, 0.2], [0.3, 0.4]]
-        )
+        mock_model.encode.return_value = MagicMock(tolist=lambda: [[0.1, 0.2], [0.3, 0.4]])
         mock_st.return_value = mock_model
 
         generator = EmbeddingGenerator(model_name="test-model")
@@ -122,6 +115,7 @@ class TestEmbeddingGeneratorSingleton:
         """Test singleton returns same instance."""
         # Reset singleton
         import wenah.data.embeddings as emb_module
+
         emb_module._embedding_generator = None
 
         gen1 = get_embedding_generator()
@@ -708,9 +702,7 @@ class TestEmbeddingVectorStoreIntegration:
         """Test workflow of embedding documents and storing them."""
         # Setup embedding mock
         mock_model = MagicMock()
-        mock_model.encode.return_value = MagicMock(
-            tolist=lambda: [[0.1, 0.2], [0.3, 0.4]]
-        )
+        mock_model.encode.return_value = MagicMock(tolist=lambda: [[0.1, 0.2], [0.3, 0.4]])
         mock_st.return_value = mock_model
 
         # Setup vector store mock

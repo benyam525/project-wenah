@@ -7,12 +7,12 @@ information.
 """
 
 import re
-from typing import Any
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 from wenah.config import settings
-from wenah.core.types import RAGResponse, GuardrailCheck, ValidationStatus
+from wenah.core.types import GuardrailCheck, RAGResponse, ValidationStatus
 from wenah.data.vector_store import VectorStore
 
 
@@ -119,7 +119,6 @@ class HallucinationGuardrails:
             Validated (potentially modified) response
         """
         checks = []
-        original_confidence = response.confidence_score
 
         # Check 1: Citation verification
         citation_check = self._verify_citations(response.cited_sources)
@@ -216,9 +215,7 @@ class HallucinationGuardrails:
             )
 
         # Build corpus from retrieved documents
-        doc_corpus = " ".join(
-            doc.get("content", "").lower() for doc in retrieved_docs
-        )
+        doc_corpus = " ".join(doc.get("content", "").lower() for doc in retrieved_docs)
 
         # Check grounding for each claim
         grounded_claims = 0
@@ -262,15 +259,11 @@ class HallucinationGuardrails:
 
         # Count hedging language
         hedging_count = sum(
-            len(re.findall(pattern, analysis, re.IGNORECASE))
-            for pattern in self.HEDGING_PATTERNS
+            len(re.findall(pattern, analysis, re.IGNORECASE)) for pattern in self.HEDGING_PATTERNS
         )
 
         # Penalize for excessive hedging
-        hedging_penalty = min(
-            settings.max_hedging_penalty,
-            hedging_count * 0.03
-        )
+        hedging_penalty = min(settings.max_hedging_penalty, hedging_count * 0.03)
         adjustment -= hedging_penalty
 
         # Penalize for few citations
@@ -424,9 +417,22 @@ class HallucinationGuardrails:
 
         # Remove common words
         common_words = {
-            "that", "this", "with", "from", "have", "been",
-            "would", "could", "should", "their", "there",
-            "which", "where", "when", "what", "will",
+            "that",
+            "this",
+            "with",
+            "from",
+            "have",
+            "been",
+            "would",
+            "could",
+            "should",
+            "their",
+            "there",
+            "which",
+            "where",
+            "when",
+            "what",
+            "will",
         }
         claim_terms -= common_words
 
@@ -447,12 +453,8 @@ class HallucinationGuardrails:
     ) -> RAGResponse:
         """Apply guardrail modifications to response."""
         # Count failures by severity
-        critical_failures = [
-            c for c in checks if not c.passed and c.severity == "critical"
-        ]
-        warnings = [
-            c for c in checks if not c.passed and c.severity == "warning"
-        ]
+        critical_failures = [c for c in checks if not c.passed and c.severity == "critical"]
+        warnings = [c for c in checks if not c.passed and c.severity == "warning"]
 
         # Calculate new confidence
         new_confidence = response.confidence_score + confidence_adjustment

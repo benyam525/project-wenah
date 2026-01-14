@@ -2,15 +2,16 @@
 Pytest fixtures and configuration for Wenah tests.
 """
 
-import pytest
 from pathlib import Path
 
+import pytest
+
 from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
     AlgorithmSpec,
+    DataFieldSpec,
+    FeatureType,
+    ProductCategory,
+    ProductFeatureInput,
 )
 
 

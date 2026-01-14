@@ -7,8 +7,8 @@ grounded, accurate compliance assessments.
 Note: Requires optional heavy dependencies (chromadb, sentence-transformers).
 """
 
-from typing import Any
 from dataclasses import dataclass, field
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -21,8 +21,9 @@ from wenah.core.types import (
 
 # Optional heavy dependencies
 try:
-    from wenah.data.vector_store import VectorStore, get_vector_store
     from wenah.data.embeddings import EmbeddingGenerator, get_embedding_generator
+    from wenah.data.vector_store import VectorStore, get_vector_store
+
     VECTOR_DEPS_AVAILABLE = True
 except ImportError:
     VectorStore = None
@@ -32,7 +33,8 @@ except ImportError:
     VECTOR_DEPS_AVAILABLE = False
 
 try:
-    from wenah.llm.claude_client import ClaudeClient, get_claude_client, AnalysisType
+    from wenah.llm.claude_client import AnalysisType, ClaudeClient, get_claude_client
+
     CLAUDE_AVAILABLE = True
 except ImportError:
     ClaudeClient = None
@@ -42,11 +44,8 @@ except ImportError:
 
 from wenah.llm.prompts import (
     SYSTEM_PROMPT_STRUCTURED_OUTPUT,
-    build_risk_analysis_prompt,
-    build_disparate_impact_prompt,
     build_proxy_variable_prompt,
-    build_ada_compliance_prompt,
-    build_ai_algorithm_prompt,
+    build_risk_analysis_prompt,
     format_context_documents,
 )
 
@@ -122,8 +121,7 @@ class RAGPipeline:
             )
         if not CLAUDE_AVAILABLE:
             raise ImportError(
-                "RAG pipeline requires anthropic client. "
-                "Install with: pip install anthropic"
+                "RAG pipeline requires anthropic client. Install with: pip install anthropic"
             )
 
         self.vector_store = vector_store or get_vector_store()
@@ -138,6 +136,7 @@ class RAGPipeline:
         """Lazy load guardrails."""
         if self._guardrails is None:
             from wenah.llm.guardrails import HallucinationGuardrails
+
             self._guardrails = HallucinationGuardrails(self.vector_store)
         return self._guardrails
 
@@ -186,9 +185,7 @@ class RAGPipeline:
 
         # Step 6: Apply guardrails if enabled
         if apply_guardrails and settings.enable_hallucination_guardrails:
-            rag_response = self.guardrails.validate(
-                rag_response, retrieval_result.documents
-            )
+            rag_response = self.guardrails.validate(rag_response, retrieval_result.documents)
 
         return RAGResult(
             response=rag_response,
@@ -216,7 +213,9 @@ class RAGPipeline:
         """
         # Build query from rule context
         llm_context = rule_evaluation.llm_context or {}
-        question = llm_context.get("question", f"Analyze compliance with {rule_evaluation.rule_name}")
+        question = llm_context.get(
+            "question", f"Analyze compliance with {rule_evaluation.rule_name}"
+        )
         required_analysis = llm_context.get("required_analysis", [])
 
         # Retrieve focused documents
@@ -246,9 +245,7 @@ class RAGPipeline:
         rag_response = self._parse_response(response.content)
 
         if settings.enable_hallucination_guardrails:
-            rag_response = self.guardrails.validate(
-                rag_response, retrieval_result.documents
-            )
+            rag_response = self.guardrails.validate(rag_response, retrieval_result.documents)
 
         return RAGResult(
             response=rag_response,
@@ -312,9 +309,7 @@ class RAGPipeline:
         )
 
         if settings.enable_hallucination_guardrails:
-            rag_response = self.guardrails.validate(
-                rag_response, retrieval_result.documents
-            )
+            rag_response = self.guardrails.validate(rag_response, retrieval_result.documents)
 
         return RAGResult(
             response=rag_response,
@@ -396,10 +391,7 @@ class RAGPipeline:
         )[:top_k]
 
         return RetrievalResult(
-            documents=[
-                {"content": d["content"], "metadata": d["metadata"]}
-                for d in sorted_docs
-            ],
+            documents=[{"content": d["content"], "metadata": d["metadata"]} for d in sorted_docs],
             query="; ".join(queries[:3]),
             total_retrieved=len(sorted_docs),
             filters_applied={"category": category} if category else {},
@@ -430,7 +422,9 @@ class RAGPipeline:
                 "inputs": feature.algorithm.inputs,
                 "outputs": feature.algorithm.outputs,
                 "bias_testing_done": feature.algorithm.bias_testing_done,
-            } if feature.algorithm else None,
+            }
+            if feature.algorithm
+            else None,
             "decision_impact": feature.decision_impact,
             "affected_population": feature.affected_population,
         }
@@ -460,7 +454,7 @@ class RAGPipeline:
 - **Rule:** {rule_evaluation.rule_name}
 - **Initial Assessment:** {rule_evaluation.result.value}
 - **Risk Score:** {rule_evaluation.risk_score}
-- **Law Reference:** {', '.join(rule_evaluation.law_references)}
+- **Law Reference:** {", ".join(rule_evaluation.law_references)}
 
 ### Feature Being Evaluated
 - **Name:** {feature.name}

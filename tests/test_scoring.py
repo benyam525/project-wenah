@@ -7,37 +7,30 @@ Tests cover:
 - ComplianceEngine: feature and product assessment orchestration
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from typing import Any
+from unittest.mock import Mock, patch
 
-from wenah.core.types import (
-    ProductFeatureInput,
-    ProductCategory,
-    FeatureType,
-    DataFieldSpec,
-    AlgorithmSpec,
-    RuleEvaluation,
-    RuleResult,
-    RAGResponse,
-    RiskLevel,
-    ComponentScore,
-    CategoryBreakdown,
-    UnifiedRiskScore,
+import pytest
+
+from wenah.core.engine import (
+    AssessmentConfig,
+    ComplianceEngine,
+    FeatureAnalysis,
 )
 from wenah.core.scoring import (
-    ScoringEngine,
     ScoreExplainer,
     ScoreSource,
-    ScoringContext,
-    get_scoring_engine,
+    ScoringEngine,
     get_score_explainer,
+    get_scoring_engine,
 )
-from wenah.core.engine import (
-    ComplianceEngine,
-    AssessmentConfig,
-    FeatureAnalysis,
-    get_compliance_engine,
+from wenah.core.types import (
+    CategoryBreakdown,
+    ComponentScore,
+    RAGResponse,
+    RiskLevel,
+    RuleEvaluation,
+    RuleResult,
+    UnifiedRiskScore,
 )
 
 
@@ -463,9 +456,7 @@ class TestScoringEngine:
             ),
         ]
 
-        needed, reasons = scoring_engine._check_human_review_needed(
-            scores, [], None
-        )
+        needed, reasons = scoring_engine._check_human_review_needed(scores, [], None)
 
         assert needed
         assert any("risk score" in r.lower() for r in reasons)
@@ -483,9 +474,7 @@ class TestScoringEngine:
             ),
         ]
 
-        needed, reasons = scoring_engine._check_human_review_needed(
-            scores, [], None
-        )
+        needed, reasons = scoring_engine._check_human_review_needed(scores, [], None)
 
         assert needed
         assert any("confidence" in r.lower() for r in reasons)
@@ -535,9 +524,7 @@ class TestScoringEngine:
             ),
         ]
 
-        needed, reasons = scoring_engine._check_human_review_needed(
-            scores, [], None
-        )
+        needed, reasons = scoring_engine._check_human_review_needed(scores, [], None)
 
         assert needed
         assert any("conflicting" in r.lower() for r in reasons)
@@ -702,9 +689,7 @@ class TestScoreExplainer:
 
     def test_explain_brief(self, explainer, sample_unified_score):
         """Test brief explanation."""
-        explanation = explainer.explain_score(
-            sample_unified_score, detail_level="brief"
-        )
+        explanation = explainer.explain_score(sample_unified_score, detail_level="brief")
 
         assert "65/100" in explanation
         assert "HIGH" in explanation
@@ -714,9 +699,7 @@ class TestScoreExplainer:
 
     def test_explain_standard(self, explainer, sample_unified_score):
         """Test standard explanation."""
-        explanation = explainer.explain_score(
-            sample_unified_score, detail_level="standard"
-        )
+        explanation = explainer.explain_score(sample_unified_score, detail_level="standard")
 
         assert "65/100" in explanation
         assert "Score Components" in explanation
@@ -725,9 +708,7 @@ class TestScoreExplainer:
 
     def test_explain_detailed(self, explainer, sample_unified_score):
         """Test detailed explanation."""
-        explanation = explainer.explain_score(
-            sample_unified_score, detail_level="detailed"
-        )
+        explanation = explainer.explain_score(sample_unified_score, detail_level="detailed")
 
         assert "65/100" in explanation
         assert "Score Components" in explanation
