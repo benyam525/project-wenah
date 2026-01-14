@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<!-- Wenah Dashboard v1.0 - Production Build -->
+<!-- Equitas Dashboard v1.0 - Production Build -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wenah | Civil Rights Compliance Framework</title>
+    <meta name="description" content="Equitas - AI-powered civil rights compliance platform. Detect proxy variables, assess discrimination risk, and ensure fair algorithmic decision-making.">
+    <meta name="theme-color" content="#d4a853">
+    <title>Equitas | Civil Rights Compliance Platform</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1738,7 +1740,7 @@
                 <path d="M3 12h18M3 6h18M3 18h18"/>
             </svg>
         </button>
-        <span class="mobile-logo">Wenah</span>
+        <span class="mobile-logo">Equitas</span>
         <div style="width: 40px;"></div>
     </div>
 
@@ -1763,8 +1765,8 @@
                         </svg>
                     </div>
                     <div>
-                        <div class="logo-text">Wenah</div>
-                        <div class="logo-subtitle">Compliance Framework</div>
+                        <div class="logo-text">Equitas</div>
+                        <div class="logo-subtitle">Compliance Platform</div>
                     </div>
                 </div>
             </div>
@@ -2853,7 +2855,7 @@
                     const health = await this.api.getHealth();
                     this.isConnected = health.status === 'healthy';
                     if (this.isConnected) {
-                        console.log('Connected to Wenah API v' + health.version);
+                        console.log('Connected to Equitas API v' + health.version);
                     }
                 } catch (error) {
                     this.isConnected = false;
@@ -3178,7 +3180,7 @@
 
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `wenah-assessment-${Date.now()}.json`;
+                a.download = `equitas-assessment-${Date.now()}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -3280,7 +3282,7 @@
 
         class AssessmentHistory {
             constructor() {
-                this.storageKey = 'wenah_assessment_history';
+                this.storageKey = 'equitas_assessment_history';
                 this.maxItems = 50;
             }
 
